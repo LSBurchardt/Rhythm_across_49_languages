@@ -17,7 +17,7 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "stringr")
+install_load("tidyverse")
 
 # 01a: functions ----
 
@@ -56,12 +56,17 @@ for(i in 1:length(rhythm_results_doreco$filename)){
   rhythm_results_doreco$speaker[i] <- names[[7]]
   rhythm_results_doreco$speaker[i] <- substring(rhythm_results_doreco$speaker[i], 1, nchar(rhythm_results_doreco$speaker[i])-4)
   rhythm_results_doreco$type[i] <- names[[1]]
+  rhythm_results_doreco$file[i] <- names[[5]]   #filename from raw file, to use to join rhythm results with meta data file
 }
 
 #  meta data like speaker sex and speaker age needs to be extracted/joined from raw data extraction from Database
 
-#  to be added...
+meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data.csv", delim = ",")
 
+meta_data_file <- meta_data_file %>% 
+  select(file, Speaker_Age, Speaker_Sex)
+
+rhythm_results_doreco_meta <- left_join(rhythm_results_doreco, meta_data_file, by = "file", multiple = "any")
 
 #03: analysis ----
 

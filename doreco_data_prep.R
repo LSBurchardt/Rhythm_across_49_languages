@@ -95,6 +95,10 @@ data_ipu_filtered$file <- str_replace_all(data_ipu_filtered$file, "_", "-")
 
 data_ipu_filtered$speaker <- str_replace_all(data_ipu_filtered$speaker, "_", "-")
 
+# save filtered data table, to access meta data after rhythm analysis
+
+write.table(data_ipu_filtered, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+
 
 # 03: file seperation ----
 
