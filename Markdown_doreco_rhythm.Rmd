@@ -173,6 +173,10 @@ rm(reverse)
 ```{r data_prep_2, eval = FALSE}
 
 #join height information from Baten & Blum (2015) dataset with rhythm results
+# https://clio-infra.eu/Indicators/Height.html downloaded from here, only column names were
+# changed slightly to fit the format 
+# Myanmar was renamed to "Myanmar(Burma)" as it was named like that in the geocoding lists
+
 
 heights <- read_delim("average-height-of-men-for-selected-countries.csv", delim = ";")
 
@@ -199,6 +203,27 @@ rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word_meta, co
 saveRDS(rhythm_results_doreco_word_meta, file = "rhythm_results_doreco_word_meta.rds")
 saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta.rds")
 
+```
+
+```{r elevation, eval = FALSE, echo = FALSE, include = FALSE}
+#check next: adding elevation levels of coordinates with the "elevatr" package 
+# i think this package only works with locations in the US though...
+
+# Install and load the elevatr package
+install.packages("elevatr")
+library(elevatr)
+
+# Example coordinates
+coordinates <- data.frame(
+  latitude = c(37.7749, 48.8566, -34.397),
+  longitude = c(-122.4194, 2.3522, 150.644)
+)
+
+# Query elevation data
+elevation_data <- elevatr::get_elev_point(coordinates)
+
+# Print the result
+print(elevation_data)
 ```
 
 
