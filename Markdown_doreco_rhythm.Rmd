@@ -368,7 +368,8 @@ rhythm_results_doreco_ipu_ordered %>%
   xlab("Language Family")
 
 ```
-
+% LP: Need to remove "Isolate", as this is not a reasonable group .
+% (here and in the figure below)
 
 
 ```{r sex_ipu, echo = FALSE, include=FALSE}
@@ -652,7 +653,7 @@ rhythm_results_doreco_word_meta %>%
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Tonal Language --  IPU Level')
+  xlab(' Tonal Language --  Word Level')
 
 rhythm_results_doreco_word_meta %>% 
   ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
@@ -660,7 +661,7 @@ rhythm_results_doreco_word_meta %>%
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Morphological Complexity -- IPU Level')
+  xlab(' Morphological Complexity -- Word Level')
 
 
 ```
