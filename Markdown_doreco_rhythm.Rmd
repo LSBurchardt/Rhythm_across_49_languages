@@ -29,8 +29,12 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "psych")
+install_load("tidyverse", "psych", "tidygeocoder", "countrycode")
+```
 
+
+
+```{r data_load, eval=FALSE, include = FALSE}
 # load data ----- 
 
 # meta data languages
@@ -40,6 +44,13 @@ languages_meta <- read_delim("doreco_languages_metadata_v1.2.csv", delim = ",")
 # meta data files
 
 meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data.csv", delim = ",")
+
+# meta data, morphologic complexity + ton language information
+
+meta_data_morph_tone <- read_delim("Typo_Info_Rhythm_Project.csv", delim = ";")
+meta_data_morph_tone <- meta_data_morph_tone %>% 
+  select(Language, Glottocode, `Complexity `, Tone) %>% 
+  mutate(Complexity = `Complexity `)
 
 # word data
 
@@ -80,6 +91,8 @@ meta_data_file <- meta_data_file %>%
 rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word, meta_data_file, by = "file", multiple = "any")
 
 rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, languages_meta, by = "Glottocode", multiple = "any")
+
+rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, meta_data_morph_tone, by = "Glottocode", multiple = "any")
 
 # for visualization we also produce a dataset where languages are ordered by median ioi-beat
 
@@ -126,14 +139,97 @@ rhythm_results_doreco_ipu_meta <- left_join(rhythm_results_doreco_ipu, meta_data
 
 rhythm_results_doreco_ipu_meta <- left_join(rhythm_results_doreco_ipu_meta, languages_meta, by = "Glottocode", multiple = "any")
   
+rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, meta_data_morph_tone, by = "Glottocode", multiple = "any")
 
+
+
+```
+
+```{r data_prep, eval = FALSE}
+for(a in 1:nrow(rhythm_results_doreco_ipu_meta)){
+#  for(a in 1:5){
+  lat_longs <- tibble::tribble(
+  ~latitude,        ~longitude,
+   rhythm_results_doreco_ipu_meta$Latitude[a],           rhythm_results_doreco_ipu_meta$Longitude[a]
+)
+  
+reverse <-  lat_longs %>%
+  reverse_geocode(lat = latitude, long = longitude, method = 'osm',
+                  address = address_found, full_results = TRUE) %>%
+  select(country, country_code)
+
+rhythm_results_doreco_ipu_meta$country[a] <- reverse$country
+rhythm_results_doreco_ipu_meta$country_code[a] <- reverse$country_code
+
+country_name_eng <- countrycode(reverse$country_code, "iso2c", "country.name")
+
+rhythm_results_doreco_ipu_meta$country_eng[a] <- country_name_eng
+
+rm(reverse)
+
+}
+```
+
+```{r data_prep_2, eval = FALSE}
+
+#join height information from Baten & Blum (2015) dataset with rhythm results
+
+heights <- read_delim("average-height-of-men-for-selected-countries.csv", delim = ";")
+
+heights <- heights %>% 
+  select(country_eng, Year, Height)
+
+heights_avg <- heights %>%
+  group_by(country_eng) %>%
+  summarise(avg_height = mean(Height, na.rm = TRUE))
+
+
+rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, heights_avg, by = "country_eng", multiple = "any")
+
+# use data from ipu dataframe to add country and height information to the word dataframe as well
+# we split the ipu dataframe, selecting only the relevant data: longitude,lattitude, country, country_eng, avg_height
+
+country_height_info <- rhythm_results_doreco_ipu_meta %>% 
+  select(Longitude, Latitude, country, country_code, country_eng, avg_height)
+
+rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word_meta, country_height_info, by = c("Longitude", "Latitude"), multiple = "any")
+
+
+
+saveRDS(rhythm_results_doreco_word_meta, file = "rhythm_results_doreco_word_meta.rds")
+saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta.rds")
+
+```
+
+
+```{r load_final_data}
+# in this chunk we load the final data version, that we prepared in the chunks above and saved in lines 213 and 214
+# as these preparations need some time to calculate, we here give the option to knit the document faster, by loading the final dataframes from .rds
+
+rhythm_results_doreco_ipu_meta <- readRDS("rhythm_results_doreco_ipu_meta.rds")
+
+rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
+  mutate(Language = Language.x) %>% 
+  select(-Language.y, -Language.x)
+
+rhythm_results_doreco_word_meta <- readRDS("rhythm_results_doreco_word_meta.rds")
+
+rhythm_results_doreco_word_meta <- rhythm_results_doreco_word_meta %>% 
+  mutate(Language = Language.x) %>% 
+  select(-Language.y, -Language.x)
+
+```
+
+
+```{r ordered}
 # for visualization we also produce a dataset where languages are ordered by median ioi-beat
 
 # there is a weird thing in this file, we filter it to check, if that maeks the ordering go astray 
-sub_data_ipu <- rhythm_results_doreco_ipu_meta %>% 
-  filter(file != "doreco-tsim1256-IGS0229-2017-3-8-6")
+#sub_data_ipu <- rhythm_results_doreco_ipu_meta %>% 
+#  filter(file != "doreco-tsim1256-IGS0229-2017-3-8-6")
 
-group_ordered_ipu <- with(sub_data_ipu,                     # Order boxes by median
+## IPU Level
+group_ordered_ipu <- with(rhythm_results_doreco_ipu_meta,                     # Order boxes by median
                       reorder(Language,
                               ioi_beat,
                               median))
@@ -143,6 +239,16 @@ rhythm_results_doreco_ipu_ordered <- rhythm_results_doreco_ipu_meta
 rhythm_results_doreco_ipu_ordered$Language <- factor(rhythm_results_doreco_ipu_ordered$Language,
                              levels = levels(group_ordered_ipu))
 
+## WORD Level
+group_ordered_word <- with(rhythm_results_doreco_word_meta,                     # Order boxes by median
+                      reorder(Language,
+                              ioi_beat,
+                              median))
+
+rhythm_results_doreco_word_ordered <- rhythm_results_doreco_word_meta                              
+# Create data with reordered group levels
+rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
+                             levels = levels(group_ordered_ipu))
 ```
 
 ## Data Summary
@@ -150,7 +256,7 @@ rhythm_results_doreco_ipu_ordered$Language <- factor(rhythm_results_doreco_ipu_o
 
 ```{r summary_ipu}
 
-rhythm_results_doreco_ipu %>%
+rhythm_results_doreco_ipu_meta %>%
   select('ioi_beat', 'unbiased_cv', 'npvi', 'fourier_beat', 'n_elements') %>% 
   summary(na.rm = TRUE)
 ```
@@ -158,7 +264,7 @@ rhythm_results_doreco_ipu %>%
 ### Word Level
 
 ```{r summary_word}
-rhythm_results_doreco_word %>% 
+rhythm_results_doreco_word_meta %>% 
   select('ioi_beat', 'unbiased_cv', 'npvi', 'fourier_beat', 'n_elements') %>% 
   summary()
 
@@ -240,7 +346,7 @@ rhythm_results_doreco_ipu_ordered %>%
 
 
 
-```{r sex_ipu}
+```{r sex_ipu, echo = FALSE, include=FALSE}
 
 rhythm_results_doreco_ipu_meta %>%
   drop_na(Speaker_Sex) %>% 
@@ -289,7 +395,7 @@ ggplot(median_data, aes(x = Speaker_Age, y = ioi_beat)) +
 
 ```
 
-```{r age_facet_ipu, fig.height=40}
+```{r age_facet_ipu, fig.height=40, include=FALSE, echo=FALSE}
 
 rhythm_results_doreco_ipu_meta %>% 
   ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
@@ -310,6 +416,59 @@ rhythm_results_doreco_ipu_meta %>%
   theme_minimal()+
   theme(legend.position = "none")+
   xlab('Speaker Age - IPU Level')
+
+```
+
+Next we check for any effect of morphological complexity and a potential difference
+between tonal and non-tonal languages.
+
+```{r typo_info_ipu}
+
+rhythm_results_doreco_ipu_meta %>% 
+  ggplot(aes(x= Tone, y = ioi_beat ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Tonal Language --  IPU Level')
+
+rhythm_results_doreco_ipu_meta %>% 
+  ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Morphological Complexity -- IPU Level')
+
+
+```
+
+What can we say about different areas of the world?
+
+```{r area_ipu}
+
+rhythm_results_doreco_ipu_meta %>% 
+  ggplot(aes(x= Area, y = ioi_beat ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Area --  IPU Level')
+
+
+
+```
+
+And how does the IOI Beat relate to the average height of people in the country where this language is spoken?
+
+```{r height_ipu}
+
+rhythm_results_doreco_ipu_meta %>% 
+  ggplot(aes(x= avg_height, y = ioi_beat ))+
+  geom_jitter(alpha = 0.5, aes(color = Area))+
+  theme_minimal()+
+  xlab('Average Height per Country [cm]')
+
 
 ```
 
@@ -385,7 +544,7 @@ rhythm_results_doreco_word_ordered %>%
 
 
 
-```{r sex_word}
+```{r sex_word, include=FALSE, echo = FALSE}
 
   rhythm_results_doreco_word_meta %>%
   drop_na(Speaker_Sex) %>% 
@@ -434,7 +593,7 @@ ggplot(median_data_word, aes(x = Speaker_Age, y = ioi_beat)) +
 
 ```
 
-```{r age_facet_word, fig.height=40}
+```{r age_facet_word, fig.height=40, include=FALSE}
 
 rhythm_results_doreco_word_meta %>% 
   ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
@@ -454,6 +613,61 @@ rhythm_results_doreco_word_meta %>%
   theme_minimal()+
   theme(legend.position = "none")+
   xlab('Speaker Age - Word Level')
+
+```
+
+Next we check for any effect of morphological complexity and a potential difference
+between tonal and non-tonal languages.
+
+```{r typo_info_word}
+
+rhythm_results_doreco_word_meta %>% 
+  ggplot(aes(x= Tone, y = ioi_beat ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Tonal Language --  IPU Level')
+
+rhythm_results_doreco_word_meta %>% 
+  ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Morphological Complexity -- IPU Level')
+
+
+```
+
+
+What can we say about different areas of the world on the word level?
+
+```{r area_word}
+
+rhythm_results_doreco_word_meta %>% 
+  ggplot(aes(x= Area, y = ioi_beat ))+
+  geom_boxplot()+
+  geom_jitter(size= 0.5, alpha = 0.5)+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  xlab(' Area --  Word Level')
+
+
+
+```
+
+And how does the IOI Beat on word level relate to the average height of people in the country where this language is spoken?
+
+```{r height_word}
+
+rhythm_results_doreco_word_meta %>% 
+  ggplot(aes(x= avg_height, y = ioi_beat ))+
+  geom_jitter(alpha = 0.5, aes(color = Area))+
+  theme_minimal()+
+  xlab('Average Height per Country [cm]')
+  ylab(' IOI Beat [Hz] -- Word Level' )
+
 
 ```
 
