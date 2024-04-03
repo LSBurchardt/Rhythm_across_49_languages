@@ -24,7 +24,7 @@ io_data <- wd_csv_data %>%
   filter(!(ph == "<p:>" & io_unit == 1)) %>%
   summarise(start_time = first(start),
             end_time = last(end),
-            duration = sum(duration),
+            duration = round(sum(duration), 3),
             only_labels = !(any(!str_starts(wd[wd != "<p:>"], '<<'))),
             .groups = 'drop') %>%
   group_by(file, speaker) %>%
@@ -32,7 +32,7 @@ io_data <- wd_csv_data %>%
   ungroup() %>%
   mutate(io_unit = row_number())
 
-# Read metadata CSV and merge dataframes
+# Read speaker-level metadata CSV and merge dataframes
 metadata <- read.csv("csvs/metadata_merged_1_3.csv", na.strings = "na")
 metadata$file <- paste("doreco_",metadata$glottocode,"_",metadata$filename,sep="")
 io_merged <- merge(io_data,metadata,by="file")
