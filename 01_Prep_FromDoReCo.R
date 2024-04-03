@@ -50,4 +50,4 @@ lookup <- c(speaker_sex = "spk_sex_a", speaker_age = "spk_age_a")
 io_final <- rename(io_clean, all_of(lookup))  
 
 # Write to a new CSV file
-write_csv(io_final, "DoReCo_1_3_IO.csv") # This creates a new CSV file with the processed data
+write_csv(io_final, "DoReCo_1_3_IO.csv")
