@@ -17,6 +17,7 @@ wd_csv_data <- wd_csv_data %>% mutate(duration = round(end - start, 3))
 
 # Identify IO units, calculate duration, check for labels, assign corpus-wide running integer
 io_data <- wd_csv_data %>%
+  mutate(across(.cols = everything(), ~ifelse(. == "<<wip>>", "<p:>", .))) %>%
   group_by(file, speaker) %>%
   mutate(is_sequence_start = (ph != "<p:>" & lag(ph, default = first(ph)) == "<p:>") | row_number() == 1,
          io_unit = cumsum(is_sequence_start)) %>%
