@@ -54,34 +54,34 @@ meta_data_morph_tone <- meta_data_morph_tone %>%
 
 # word data ----
 
-path <- "language_data_word/results"
-pattern <- "csv"
-
-list_of_files_word <- list.files(path = path, pattern = pattern)
-
-rhythm_results_doreco_word <- data.frame(matrix(ncol = 24, nrow = 0))
-
-for (a in 1:length(list_of_files_word)){
-  
- data <- read_delim(paste(path, list_of_files_word[a], sep = "\\")) 
-  
- rhythm_results_doreco_word <- rbind(rhythm_results_doreco_word, data)
-  
-}
+# path <- "language_data_word/results"
+# pattern <- "csv"
+# 
+# list_of_files_word <- list.files(path = path, pattern = pattern)
+# 
+# rhythm_results_doreco_word <- data.frame(matrix(ncol = 24, nrow = 0))
+# 
+# for (a in 1:length(list_of_files_word)){
+#   
+#  data <- read_delim(paste(path, list_of_files_word[a], sep = "\\")) 
+#   
+#  rhythm_results_doreco_word <- rbind(rhythm_results_doreco_word, data)
+#   
+# }
 
 ## 02: add meta data, word ----
 
 
-for(i in 1:length(rhythm_results_doreco_word$filename)){
-  names <- str_split(rhythm_results_doreco_word$filename[i], pattern = "_")
-  names <- names[[1]]
-  rhythm_results_doreco_word$language[i] <- names[[3]]
-  rhythm_results_doreco_word$Glottocode[i] <- names[[3]]
-  rhythm_results_doreco_word$speaker[i] <- names[[7]]
-  rhythm_results_doreco_word$speaker[i] <- substring(rhythm_results_doreco_word$speaker[i], 1, nchar(rhythm_results_doreco_word$speaker[i])-4)
-  rhythm_results_doreco_word$type[i] <- names[[1]]
-  rhythm_results_doreco_word$file[i] <- names[[5]]   #filename from raw file, to use to join rhythm results with meta data file
-}
+# for(i in 1:length(rhythm_results_doreco_word$filename)){
+#   names <- str_split(rhythm_results_doreco_word$filename[i], pattern = "_")
+#   names <- names[[1]]
+#   rhythm_results_doreco_word$language[i] <- names[[3]]
+#   rhythm_results_doreco_word$Glottocode[i] <- names[[3]]
+#   rhythm_results_doreco_word$speaker[i] <- names[[7]]
+#   rhythm_results_doreco_word$speaker[i] <- substring(rhythm_results_doreco_word$speaker[i], 1, nchar(rhythm_results_doreco_word$speaker[i])-4)
+#   rhythm_results_doreco_word$type[i] <- names[[1]]
+#   rhythm_results_doreco_word$file[i] <- names[[5]]   #filename from raw file, to use to join rhythm results with meta data file
+# }
 
 #  meta data like speaker sex and speaker age needs to be extracted/joined from raw data extraction from Database
 
@@ -202,7 +202,7 @@ rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word_meta, co
 
 
 
-saveRDS(rhythm_results_doreco_word_meta, file = "rhythm_results_doreco_word_meta.rds")
+#saveRDS(rhythm_results_doreco_word_meta, file = "rhythm_results_doreco_word_meta.rds")
 saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta.rds")
 
 ```
@@ -266,7 +266,15 @@ rhythm_results_doreco_word_meta <- rhythm_results_doreco_word_meta %>%
 rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
   filter(filename != "ipu_language_resi1247_file_doreco-resi1247-storyalicia_speaker_resi1247-OG_runapr24.csv")
   
+# This is a short term solution, to filter out datafiles with ioi beats < 0.2, because there are likely long silent pauses
+#these need to be dealt with consistently, best: split files and reanalyse
+# it is only 6 datapoints with ioi beat < 0.2
 
+
+#rhythm_results_doreco_ipu_meta_unfiltered <- rhythm_results_doreco_ipu_meta #backup copy
+
+rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
+  filter(ioi_beat>0.2)
 
 ```
 
@@ -309,6 +317,37 @@ rhythm_results_doreco_ipu_ordered$Family <- factor(rhythm_results_doreco_ipu_ord
 
 
 ## Data Summary
+
+```{r map}
+# map plot, where are languages spoken?
+unique_coords <- unique(rhythm_results_doreco_ipu_meta[, c("Latitude", "Longitude")])
+
+# Create a dataframe with unique coordinates
+unique_coords_df <- data.frame(
+  lon = unique_coords$Longitude,
+  lat = unique_coords$Latitude)
+
+
+map_world <- ggplot2::map_data('world')
+land.colour   <- "grey75"
+border.colour <- "grey10"
+basemap= map_world
+xmin= -140
+xmax= 180
+ymin= -50
+ymax= 75
+
+map <- ggplot() +
+  coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
+  geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
+  geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Add points
+  ylab("Latitute [°]")+
+  xlab("Longitude [°]")+
+  ggtitle("Where are the languages spoken?")
+
+map
+```
+
 ### IPU Level
 
 ```{r summary_ipu}
@@ -335,11 +374,11 @@ The same visualizations are produced for both levels. We plot IOI beat and Coeff
 
 ```{r ioi_cv_ipu}
 
-rhythm_results_doreco_ipu_meta %>% 
-  ggplot(aes(y = ioi_beat))+
-  geom_boxplot()+
-  theme_minimal()+
-  xlab("IPU Level")
+# rhythm_results_doreco_ipu_meta %>% 
+#   ggplot(aes(y = ioi_beat))+
+#   geom_boxplot()+
+#   theme_minimal()+
+#   xlab("IPU Level")
 
 rhythm_results_doreco_ipu_meta %>% 
   ggplot(aes(x= ioi_beat))+
@@ -347,15 +386,15 @@ rhythm_results_doreco_ipu_meta %>%
                color = "white", fill = "darkblue")+
   theme_minimal()+
   ylab("Percentage [%]")+
-  xlab("IOI Beat [Hz] IPU Level ")
+  xlab("IPU Beat [Hz]")
 
-rhythm_results_doreco_ipu_meta %>% 
-  ggplot(aes(y = unbiased_cv))+
-  geom_boxplot(outlier.shape = NA)+
-  coord_cartesian(ylim = c(0,3))+
-  theme_minimal()+
-  xlab("IPU Level")+
-  theme(axis.text.x = element_blank())
+# rhythm_results_doreco_ipu_meta %>% 
+#   ggplot(aes(y = unbiased_cv))+
+#   geom_boxplot(outlier.shape = NA)+
+#   coord_cartesian(ylim = c(0,3))+
+#   theme_minimal()+
+#   xlab("IPU Level")+
+#   theme(axis.text.x = element_blank())
 
 rhythm_results_doreco_ipu_meta %>% 
   ggplot(aes(x= unbiased_cv))+
@@ -363,7 +402,7 @@ rhythm_results_doreco_ipu_meta %>%
                color = "white", fill = "darkblue", binwidth = 0.25)+
   theme_minimal()+
   ylab("Percentage [%]")+
-  xlab("CV - IPU Level")
+  xlab("CV of IPU Durations")
 
 ```
 
@@ -411,23 +450,22 @@ rhythm_results_doreco_ipu_ordered %>%
   ylab("IPU Beat [Hz]")
 
 ```
-% LP: Need to remove "Isolate", as this is not a reasonable group .
-% (here and in the figure below)
-
 
 ```{r sex_ipu, echo = FALSE, include=FALSE}
 
 rhythm_results_doreco_ipu_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = ioi_beat, x = Speaker_Sex, fill = Speaker_Sex))+
+  drop_na(speaker_sex) %>%
+  group_by(speaker.y) %>% 
+  ggplot(aes(y = ioi_beat, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot()+
   #geom_jitter(aes( color = Language))
   theme_minimal()+
   xlab("IPU Level")
 
   rhythm_results_doreco_ipu_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = unbiased_cv, x = Speaker_Sex, fill = Speaker_Sex))+
+  drop_na(speaker_sex) %>%
+  group_by(speaker.y) %>%  
+  ggplot(aes(y = unbiased_cv, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot(outlier.shape = NA)+
   coord_cartesian(ylim = c(0,1))+
   #geom_jitter(aes( color = Language))
@@ -435,8 +473,9 @@ rhythm_results_doreco_ipu_meta %>%
   xlab("IPU Level")
   
   rhythm_results_doreco_ipu_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = npvi, x = Speaker_Sex, fill = Speaker_Sex))+
+  drop_na(speaker_sex) %>%
+  group_by(speaker.y) %>% 
+  ggplot(aes(y = npvi, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot()+
   #coord_cartesian(ylim = c(0,1))+
   #geom_jitter(aes( color = Language))
@@ -450,15 +489,15 @@ We also want to visualize the effect of age on the IOI Beat on the IPU Level.
 ```{r age_median_ipu}
 
 # medium ioi beat per language vs. medium age per language
-median_data <- aggregate(cbind(Speaker_Age, ioi_beat) ~ Language, data = rhythm_results_doreco_ipu_meta, median)
+median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = rhythm_results_doreco_ipu_meta, median)
 
 # Create a scatter plot with median ioi_beat against median age
-ggplot(median_data, aes(x = Speaker_Age, y = ioi_beat)) +
+ggplot(median_data, aes(x = speaker_age, y = ioi_beat)) +
   geom_point() +
   geom_smooth(method = "lm")+
-  labs(title = "Median IOI Beat [Hz] vs. Median Age per Language -- IPU Level",
+  labs(title = "Median IPU Beat [Hz] vs. Median Age per Language",
        x = "Median Age",
-       y = "Median IOI beat [Hz]") +
+       y = "Median IPU beat [Hz]") +
   theme_minimal()
 
 
@@ -467,24 +506,26 @@ ggplot(median_data, aes(x = Speaker_Age, y = ioi_beat)) +
 ```{r age_facet_ipu, fig.height=40, include=FALSE, echo=FALSE}
 
 rhythm_results_doreco_ipu_meta %>% 
-  ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
-  geom_jitter(aes(fill = language, color = language))+
+  ggplot(aes(x= speaker_age, y = ioi_beat ))+
+  geom_jitter(aes(fill = Language, color = Language))+
   geom_smooth(method = "lm")+
   facet_grid(rows = vars(Family))+
   theme_minimal()+
-  xlab('Speaker Age - IPU Level')
+  xlab('Speaker Age ')+
+  ylab("IPU beat [Hz]")
 
 ```
 
 
 ```{r age_ipu}
 rhythm_results_doreco_ipu_meta %>% 
-  ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
-  geom_jitter(aes(fill = language, color = language))+
+  ggplot(aes(x= speaker_age, y = ioi_beat ))+
+  geom_jitter(aes(fill = Language, color = Language))+
   geom_smooth(method = "lm")+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab('Speaker Age - IPU Level')
+  xlab('Speaker Age ')+
+  ylab("IPU beat [Hz]")
 
 ```
 
@@ -493,21 +534,26 @@ between tonal and non-tonal languages.
 
 ```{r typo_info_ipu}
 
-rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ipu_meta %>%
+  filter(is.na(Tone) == FALSE) %>%
+  group_by(speaker.y) %>% 
   ggplot(aes(x= Tone, y = ioi_beat ))+
   geom_boxplot()+
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Tonal Language --  IPU Level')
-
-rhythm_results_doreco_ipu_meta %>% 
+  xlab(' Tonal Language')+
+  ylab("IPU beat [Hz]")
+  
+rhythm_results_doreco_ipu_meta %>%
+  group_by(speaker.y) %>% 
   ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
   geom_boxplot()+
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Morphological Complexity -- IPU Level')
+  xlab(' Morphological Complexity ')+
+  ylab("IPU beat [Hz]")
 
 
 ```
@@ -522,7 +568,8 @@ rhythm_results_doreco_ipu_meta %>%
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Area --  IPU Level')
+  xlab(' Area')+
+  ylab("IPU beat [Hz]")
 
 
 
@@ -535,8 +582,10 @@ And how does the IOI Beat relate to the average height of people in the country 
 rhythm_results_doreco_ipu_meta %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
   geom_jitter(alpha = 0.5, aes(color = Area))+
+  geom_smooth(method = "lm")+
   theme_minimal()+
-  xlab('Average Height per Country [cm]')
+  xlab('Average Height per Country [cm]')+
+  ylab("IPU beat [Hz]")
 
 
 ```
@@ -545,69 +594,69 @@ rhythm_results_doreco_ipu_meta %>%
 
 ```{r ioi_cv_word}
 
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(y = ioi_beat))+
-  geom_boxplot()+
-  theme_minimal()+
-  xlab("Word Level")
-
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= ioi_beat))+
-  geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
-               color = "white", fill = "darkblue", binwidth = 0.25)+
-  theme_minimal()+
-  ylab("Percentage [%]")+
-  xlab("IOI Beat [Hz] -  Word Level")
-
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(y = unbiased_cv))+
-  geom_boxplot(outlier.shape = NA)+
-  coord_cartesian(ylim = c(0,3))+
-  theme_minimal()+
-  xlab("Word Level")+
-  theme(axis.text.x = element_blank())
-
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= unbiased_cv))+
-  geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
-               color = "white", fill = "darkblue", binwidth = 0.25)+
-  theme_minimal()+
-  ylab("Percentage [%]")+
-  xlab("CV - Word Level")
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(y = ioi_beat))+
+#   geom_boxplot()+
+#   theme_minimal()+
+#   xlab("Word Level")
+# 
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= ioi_beat))+
+#   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
+#                color = "white", fill = "darkblue", binwidth = 0.25)+
+#   theme_minimal()+
+#   ylab("Percentage [%]")+
+#   xlab("IOI Beat [Hz] -  Word Level")
+# 
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(y = unbiased_cv))+
+#   geom_boxplot(outlier.shape = NA)+
+#   coord_cartesian(ylim = c(0,3))+
+#   theme_minimal()+
+#   xlab("Word Level")+
+#   theme(axis.text.x = element_blank())
+# 
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= unbiased_cv))+
+#   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
+#                color = "white", fill = "darkblue", binwidth = 0.25)+
+#   theme_minimal()+
+#   ylab("Percentage [%]")+
+#   xlab("CV - Word Level")
 
 ```
 
-Now we plot the IOI Beat [Hz] for the word level per language and per language family. 
+% Now we plot the IOI Beat [Hz] for the word level per language and per language family. 
 
 ```{r languages_word}
 
-rhythm_results_doreco_word_ordered %>%
-  dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
-  #group_by(Family) %>% 
-  ggplot(aes(y = ioi_beat, x = Language, fill = Language))+
-  geom_boxplot()+
-  geom_jitter(alpha = 0.2)+
-  theme_minimal()+
-   theme(legend.position = "bottom",
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.35, 'cm'))+
-  xlab("Languages")
-
-rhythm_results_doreco_word_ordered %>%
-  dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
-  group_by(Family) %>% 
-  ggplot(aes(y = ioi_beat, x = Family, fill = Family))+
-  geom_boxplot()+
-  geom_jitter(alpha = 0.2)+
-  theme_minimal()+
- theme(legend.position = "bottom",
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 8),
-        legend.key.size = unit(0.4, 'cm'))+
-  xlab("Language Family")
+# rhythm_results_doreco_word_ordered %>%
+#   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
+#   #group_by(Family) %>% 
+#   ggplot(aes(y = ioi_beat, x = Language, fill = Language))+
+#   geom_boxplot()+
+#   geom_jitter(alpha = 0.2)+
+#   theme_minimal()+
+#    theme(legend.position = "bottom",
+#         axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 7),
+#         legend.key.size = unit(0.35, 'cm'))+
+#   xlab("Languages")
+# 
+# rhythm_results_doreco_word_ordered %>%
+#   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
+#   group_by(Family) %>% 
+#   ggplot(aes(y = ioi_beat, x = Family, fill = Family))+
+#   geom_boxplot()+
+#   geom_jitter(alpha = 0.2)+
+#   theme_minimal()+
+#  theme(legend.position = "bottom",
+#         axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 8),
+#         legend.key.size = unit(0.4, 'cm'))+
+#   xlab("Language Family")
 
 ```
 
@@ -615,156 +664,133 @@ rhythm_results_doreco_word_ordered %>%
 
 ```{r sex_word, include=FALSE, echo = FALSE}
 
-  rhythm_results_doreco_word_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = ioi_beat, x = Speaker_Sex, fill = Speaker_Sex))+
-  geom_boxplot()+
-  #geom_jitter(aes( color = Language))
-  theme_minimal()+
-  xlab("Word Level")
-
-  rhythm_results_doreco_word_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = unbiased_cv, x = Speaker_Sex, fill = Speaker_Sex))+
-  geom_boxplot(outlier.shape = NA)+
-  coord_cartesian(ylim = c(0,3))+
-  #geom_jitter(aes( color = Language))
-  theme_minimal()+
-  xlab("Word Level")
-  
-  rhythm_results_doreco_word_meta %>%
-  drop_na(Speaker_Sex) %>% 
-  ggplot(aes(y = npvi, x = Speaker_Sex, fill = Speaker_Sex))+
-  geom_boxplot()+
-  #coord_cartesian(ylim = c(0,1))+
-  #geom_jitter(aes( color = Language))
-  theme_minimal()+
-  xlab("Word Level")
+  # rhythm_results_doreco_word_meta %>%
+  # drop_na(Speaker_Sex) %>% 
+  # ggplot(aes(y = ioi_beat, x = Speaker_Sex, fill = Speaker_Sex))+
+  # geom_boxplot()+
+  # #geom_jitter(aes( color = Language))
+  # theme_minimal()+
+  # xlab("Word Level")
+  # 
+  # rhythm_results_doreco_word_meta %>%
+  # drop_na(Speaker_Sex) %>% 
+  # ggplot(aes(y = unbiased_cv, x = Speaker_Sex, fill = Speaker_Sex))+
+  # geom_boxplot(outlier.shape = NA)+
+  # coord_cartesian(ylim = c(0,3))+
+  # #geom_jitter(aes( color = Language))
+  # theme_minimal()+
+  # xlab("Word Level")
+  # 
+  # rhythm_results_doreco_word_meta %>%
+  # drop_na(Speaker_Sex) %>% 
+  # ggplot(aes(y = npvi, x = Speaker_Sex, fill = Speaker_Sex))+
+  # geom_boxplot()+
+  # #coord_cartesian(ylim = c(0,1))+
+  # #geom_jitter(aes( color = Language))
+  # theme_minimal()+
+  # xlab("Word Level")
 
 ```
 
-We also want to visualize the effect of age on the IOI Beat on the Word Level. 
+% We also want to visualize the effect of age on the IOI Beat on the Word Level. 
 
 ```{r age_median_word}
 
-# medium ioi beat per language vs. medium age per language
-median_data_word <- aggregate(cbind(Speaker_Age, ioi_beat) ~ Language, data = rhythm_results_doreco_word_meta, median)
-
-# Create a scatter plot with median ioi_beat against median age
-ggplot(median_data_word, aes(x = Speaker_Age, y = ioi_beat)) +
-  geom_point() +
-  geom_smooth(method = "lm")+
-  labs(title = "Median IOI Beat [Hz] vs. Median Age per Language -- Word Level",
-       x = "Median Age",
-       y = "Median IOI beat [Hz]") +
-  theme_minimal()
+# # medium ioi beat per language vs. medium age per language
+# median_data_word <- aggregate(cbind(Speaker_Age, ioi_beat) ~ Language, data = rhythm_results_doreco_word_meta, median)
+# 
+# # Create a scatter plot with median ioi_beat against median age
+# ggplot(median_data_word, aes(x = Speaker_Age, y = ioi_beat)) +
+#   geom_point() +
+#   geom_smooth(method = "lm")+
+#   labs(title = "Median IOI Beat [Hz] vs. Median Age per Language -- Word Level",
+#        x = "Median Age",
+#        y = "Median IOI beat [Hz]") +
+#   theme_minimal()
 
 
 ```
 
 ```{r age_facet_word, fig.height=40, include=FALSE}
 
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
-  geom_jitter(aes(fill = language, color = language))+
-  geom_smooth(method = "lm")+
-  facet_grid(rows = vars(Family))+
-  theme_minimal()+
-  xlab('Speaker Age - Word Level')
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
+#   geom_jitter(aes(fill = language, color = language))+
+#   geom_smooth(method = "lm")+
+#   facet_grid(rows = vars(Family))+
+#   theme_minimal()+
+#   xlab('Speaker Age - Word Level')
 ```
 
 
 ```{r age_word}
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
-  geom_jitter(aes(fill = language, color = language))+
-  geom_smooth(method = "lm")+
-  theme_minimal()+
-  theme(legend.position = "none")+
-  xlab('Speaker Age - Word Level')
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= Speaker_Age, y = ioi_beat ))+
+#   geom_jitter(aes(fill = language, color = language))+
+#   geom_smooth(method = "lm")+
+#   theme_minimal()+
+#   theme(legend.position = "none")+
+#   xlab('Speaker Age - Word Level')
 
 ```
 
-Next we check for any effect of morphological complexity and a potential difference
-between tonal and non-tonal languages.
+% Next we check for any effect of morphological complexity and a potential difference
+% between tonal and non-tonal languages.
 
 ```{r typo_info_word}
 
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= Tone, y = ioi_beat ))+
-  geom_boxplot()+
-  geom_jitter(size= 0.5, alpha = 0.5)+
-  theme_minimal()+
-  theme(legend.position = "none")+
-  xlab(' Tonal Language --  Word Level')
-
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
-  geom_boxplot()+
-  geom_jitter(size= 0.5, alpha = 0.5)+
-  theme_minimal()+
-  theme(legend.position = "none")+
-  xlab(' Morphological Complexity -- Word Level')
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= Tone, y = ioi_beat ))+
+#   geom_boxplot()+
+#   geom_jitter(size= 0.5, alpha = 0.5)+
+#   theme_minimal()+
+#   theme(legend.position = "none")+
+#   xlab(' Tonal Language --  Word Level')
+# 
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
+#   geom_boxplot()+
+#   geom_jitter(size= 0.5, alpha = 0.5)+
+#   theme_minimal()+
+#   theme(legend.position = "none")+
+#   xlab(' Morphological Complexity -- Word Level')
 
 
 ```
 
 
-What can we say about different areas of the world on the word level?
+% What can we say about different areas of the world on the word level?
 
 ```{r area_word}
 
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= Area, y = ioi_beat ))+
-  geom_boxplot()+
-  geom_jitter(size= 0.5, alpha = 0.5)+
-  theme_minimal()+
-  theme(legend.position = "none")+
-  xlab(' Area --  Word Level')
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= Area, y = ioi_beat ))+
+#   geom_boxplot()+
+#   geom_jitter(size= 0.5, alpha = 0.5)+
+#   theme_minimal()+
+#   theme(legend.position = "none")+
+#   xlab(' Area --  Word Level')
 
 
 
 ```
 
-And how does the IOI Beat on word level relate to the average height of people in the country where this language is spoken?
+% And how does the IOI Beat on word level relate to the average height of people in the country where this language is spoken?
 
 ```{r height_word}
 
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= avg_height, y = ioi_beat ))+
-  geom_jitter(alpha = 0.5, aes(color = Area))+
-  theme_minimal()+
-  xlab('Average Height per Country [cm]')
-  ylab(' IOI Beat [Hz] -- Word Level' )
+# rhythm_results_doreco_word_meta %>% 
+#   ggplot(aes(x= avg_height, y = ioi_beat ))+
+#   geom_jitter(alpha = 0.5, aes(color = Area))+
+#   theme_minimal()+
+#   xlab('Average Height per Country [cm]')
+#   ylab(' IOI Beat [Hz] -- Word Level' )
 
 
 ```
 
 
-Can we correlate the beats to the altittude of the "center" of the language area? Where would we get these alttitude data? 
 
-```{r get_alttitude}
-
-
-
-#get_altitude(Data, .src = "openelevation")
-
-
-
-```
-
-
-```{r alttitude_ipu}
-
-rhythm_results_doreco_word_meta %>% 
-  ggplot(aes(x= avg_height, y = ioi_beat ))+
-  geom_jitter(alpha = 0.5, aes(color = Area))+
-  theme_minimal()+
-  xlab('Average Height per Country [cm]')
-  ylab(' IOI Beat [Hz] -- Word Level' )
-
-
-```
 
 # Analysis Ideas
 
