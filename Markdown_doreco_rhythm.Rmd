@@ -29,7 +29,7 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "psych", "tidygeocoder", "countrycode")
+install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools")
 ```
 
 
@@ -39,11 +39,11 @@ install_load("tidyverse", "psych", "tidygeocoder", "countrycode")
 
 # meta data languages
 
-languages_meta <- read_delim("doreco_languages_metadata_v1.2.csv", delim = ",")
+languages_meta <- read_delim("doreco_languages_metadata_v1.3.csv", delim = ",")
 
 # meta data files
 
-meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data.csv", delim = ",")
+meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_April24.csv", delim = ",")
 
 # meta data, morphologic complexity + ton language information
 
@@ -52,7 +52,7 @@ meta_data_morph_tone <- meta_data_morph_tone %>%
   select(Language, Glottocode, `Complexity `, Tone) %>% 
   mutate(Complexity = `Complexity `)
 
-# word data
+# word data ----
 
 path <- "language_data_word/results"
 pattern <- "csv"
@@ -69,7 +69,7 @@ for (a in 1:length(list_of_files_word)){
   
 }
 
-# 02: add meta data----
+## 02: add meta data, word ----
 
 
 for(i in 1:length(rhythm_results_doreco_word$filename)){
@@ -108,19 +108,21 @@ rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word
 
 # ipu data -----
 
-path <- "language_data/results"
-pattern <- "csv"
+# path <- "language_data/results"
+# pattern <- "csv"
+# 
+# list_of_files_ipu <- list.files(path = path, pattern = pattern)
+# 
+# rhythm_results_doreco_ipu <- data.frame(matrix(ncol = 24, nrow = 0))
+# 
+# for (a in 1:length(list_of_files_ipu)){
+#   
+#  data <- read_delim(paste(path, list_of_files_ipu[a], sep = "\\")) 
+#   
+#  rhythm_results_doreco_ipu <- rbind(rhythm_results_doreco_ipu, data)
+# }
 
-list_of_files_ipu <- list.files(path = path, pattern = pattern)
-
-rhythm_results_doreco_ipu <- data.frame(matrix(ncol = 24, nrow = 0))
-
-for (a in 1:length(list_of_files_ipu)){
-  
- data <- read_delim(paste(path, list_of_files_ipu[a], sep = "\\")) 
-  
- rhythm_results_doreco_ipu <- rbind(rhythm_results_doreco_ipu, data)
-}
+rhythm_results_doreco_ipu <- read_delim("language_data/results/rhythm_analysis_doreco_ipu_mean_apr24_fs_20.csv", delim = ",")
 
  for(i in 1:length(rhythm_results_doreco_ipu$filename)){
   names <- str_split(rhythm_results_doreco_ipu$filename[i], pattern = "_")
@@ -208,22 +210,34 @@ saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta.r
 ```{r elevation, eval = FALSE, echo = FALSE, include = FALSE}
 #check next: adding elevation levels of coordinates with the "elevatr" package 
 # i think this package only works with locations in the US though...
+# 
+# 
+# # install.packages("devtools")
+# devtools::install_github("markusdumke/altituder")
+# 
+# get_altitude(.Data, .longitude = NULL, .latitude = NULL,
+#   .src = c("racemap", "geonames", "google", "openelevation"),
+#   .geonames.username = "demo", .google.api.key = NULL)
+# 
+# 
+# # Install and load the elevatr package
+# install.packages("elevatr")
+# library(elevatr)
+# 
+# # Example coordinates
+# coordinates <- data.frame(
+#   latitude = c(37.7749, 48.8566, -34.397),
+#   longitude = c(-122.4194, 2.3522, 150.644)
+# )
+# 
+# # Query elevation data
+# elevation_data <- elevatr::get_elev_point(coordinates)
+# 
+# # Print the result
+# print(elevation_data)
+# 
+# get_altitude(Data, .src = "openelevation")
 
-# Install and load the elevatr package
-install.packages("elevatr")
-library(elevatr)
-
-# Example coordinates
-coordinates <- data.frame(
-  latitude = c(37.7749, 48.8566, -34.397),
-  longitude = c(-122.4194, 2.3522, 150.644)
-)
-
-# Query elevation data
-elevation_data <- elevatr::get_elev_point(coordinates)
-
-# Print the result
-print(elevation_data)
 ```
 
 
@@ -245,36 +259,54 @@ rhythm_results_doreco_word_meta <- rhythm_results_doreco_word_meta %>%
 
 ```
 
+```{r ipu_filter}
+# some files seem to have flawed raw data, we filter them out until we know what is going on
+# file: "ipu_language_resi1247_file_doreco-resi1247-storyalicia_speaker_resi1247-OG_runapr24.csv"
+
+rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
+  filter(filename != "ipu_language_resi1247_file_doreco-resi1247-storyalicia_speaker_resi1247-OG_runapr24.csv")
+  
+
+
+```
 
 ```{r ordered}
-# for visualization we also produce a dataset where languages are ordered by median ioi-beat
-
-# there is a weird thing in this file, we filter it to check, if that maeks the ordering go astray 
-#sub_data_ipu <- rhythm_results_doreco_ipu_meta %>% 
-#  filter(file != "doreco-tsim1256-IGS0229-2017-3-8-6")
+# for visualization we also produce a dataset where languages and language family are ordered by median ioi-beat
 
 ## IPU Level
-group_ordered_ipu <- with(rhythm_results_doreco_ipu_meta,                     # Order boxes by median
-                      reorder(Language,
-                              ioi_beat,
-                              median))
 
-rhythm_results_doreco_ipu_ordered <- rhythm_results_doreco_ipu_meta                              
-# Create data with reordered group levels
+# Calculate median ioi_beat per language
+median_ioi_lan <- rhythm_results_doreco_ipu_meta %>%
+  group_by(Language) %>%
+  summarize(median_ioi_beat = median(ioi_beat, na.rm = TRUE))
+
+# Calculate median ioi_beat per language family
+median_ioi_fam <- rhythm_results_doreco_ipu_meta %>%
+  group_by(Family) %>%
+  summarize(median_ioi_beat = median(ioi_beat, na.rm = TRUE))
+
+# copy dataframe
+rhythm_results_doreco_ipu_ordered <- rhythm_results_doreco_ipu_meta 
+
+# Reorder the levels of Language based on median ioi_beat
 rhythm_results_doreco_ipu_ordered$Language <- factor(rhythm_results_doreco_ipu_ordered$Language,
-                             levels = levels(group_ordered_ipu))
+                                                     levels = median_ioi_lan$Language[order(median_ioi_lan$median_ioi_beat)])
+rhythm_results_doreco_ipu_ordered$Family <- factor(rhythm_results_doreco_ipu_ordered$Family,
+                                                     levels = median_ioi_fam$Family[order(median_ioi_fam$median_ioi_beat)])
+
 
 ## WORD Level
-group_ordered_word <- with(rhythm_results_doreco_word_meta,                     # Order boxes by median
-                      reorder(Language,
-                              ioi_beat,
-                              median))
+# group_ordered_word <- with(rhythm_results_doreco_word_meta,                     # Order boxes by median
+#                       reorder(Language,
+#                               ioi_beat,
+#                               median))
 
-rhythm_results_doreco_word_ordered <- rhythm_results_doreco_word_meta                              
+#rhythm_results_doreco_word_ordered <- rhythm_results_doreco_word_meta                              
 # Create data with reordered group levels
-rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
-                             levels = levels(group_ordered_ipu))
+#rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
+ #                            levels = levels(group_ordered_ipu))
 ```
+
 
 ## Data Summary
 ### IPU Level
@@ -289,9 +321,9 @@ rhythm_results_doreco_ipu_meta %>%
 ### Word Level
 
 ```{r summary_word}
-rhythm_results_doreco_word_meta %>% 
-  select('ioi_beat', 'unbiased_cv', 'npvi', 'fourier_beat', 'n_elements') %>% 
-  summary()
+# rhythm_results_doreco_word_meta %>% 
+#   select('ioi_beat', 'unbiased_cv', 'npvi', 'fourier_beat', 'n_elements') %>% 
+#   summary()
 
 ```
 
@@ -339,33 +371,44 @@ Now we plot IOI Beat [Hz] for the IPU Level per language and per language family
 
 ```{r languages_ipu}
 
+colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", 
+            "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#1f77b4", "#aec7e8", 
+            "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", 
+            "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", 
+            "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d")
+
 rhythm_results_doreco_ipu_ordered %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
-  group_by(Language) %>% 
-  ggplot(aes(y = ioi_beat, x = Language, fill = Language))+
+  group_by(speaker.y, Language) %>% 
+  ggplot(aes(y = ioi_beat, x = Language, fill = Family))+
   geom_boxplot()+
   geom_jitter(alpha = 0.2)+
   theme_minimal()+
-  theme(legend.position = "none",
+   scale_fill_manual(values = colors)+
+  theme(#legend.position = "none",
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
          legend.title = element_blank(),
         legend.text = element_text(size = 7),
         legend.key.size = unit(0.35, 'cm'))+
-  xlab("Languages")
+  xlab("Languages")+
+  ylab("IPU Beat [Hz]")
+
 
 rhythm_results_doreco_ipu_ordered %>%
-  dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
-  group_by(Family) %>% 
-  ggplot(aes(y = ioi_beat, x = Family, fill = Family))+
+  dplyr::filter(is.na(ioi_beat) == FALSE) %>%
+  dplyr::filter(Family != "Isolate") %>% 
+  group_by(speaker.y,Family) %>% 
+  ggplot(aes(y = ioi_beat, x = Family, fill = Tone))+
   geom_boxplot()+
   geom_jitter(alpha = 0.2)+
   theme_minimal()+
-  theme(legend.position = "none",
+  theme(#legend.position = "none",
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
         legend.title = element_blank(),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, 'cm'))+
-  xlab("Language Family")
+  xlab("Language Family")+
+  ylab("IPU Beat [Hz]")
 
 ```
 % LP: Need to remove "Isolate", as this is not a reasonable group .
@@ -686,6 +729,32 @@ rhythm_results_doreco_word_meta %>%
 And how does the IOI Beat on word level relate to the average height of people in the country where this language is spoken?
 
 ```{r height_word}
+
+rhythm_results_doreco_word_meta %>% 
+  ggplot(aes(x= avg_height, y = ioi_beat ))+
+  geom_jitter(alpha = 0.5, aes(color = Area))+
+  theme_minimal()+
+  xlab('Average Height per Country [cm]')
+  ylab(' IOI Beat [Hz] -- Word Level' )
+
+
+```
+
+
+Can we correlate the beats to the altittude of the "center" of the language area? Where would we get these alttitude data? 
+
+```{r get_alttitude}
+
+
+
+#get_altitude(Data, .src = "openelevation")
+
+
+
+```
+
+
+```{r alttitude_ipu}
 
 rhythm_results_doreco_word_meta %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
