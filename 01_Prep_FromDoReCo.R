@@ -25,7 +25,8 @@ io_data <- wd_csv_data %>%
   filter(!(ph == "<p:>" & io_unit == 1)) %>%
   summarise(start_time = first(start),
             end_time = last(end),
-            duration = round(sum(duration), 3),
+            pause_duration = last(duration),
+            io_duration = round(sum(duration), 3),
             only_labels = !(any(!str_starts(wd[wd != "<p:>"], '<<'))),
             .groups = 'drop') %>%
   group_by(file, speaker) %>%
