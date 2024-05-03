@@ -45,6 +45,7 @@ languages_meta <- read_delim("doreco_languages_metadata_v1.3.csv", delim = ",")
 
 meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_April24.csv", delim = ",")
 
+
 # meta data, morphologic complexity + ton language information
 
 meta_data_morph_tone <- read_delim("Typo_Info_Rhythm_Project.csv", delim = ";")
@@ -86,25 +87,25 @@ meta_data_morph_tone <- meta_data_morph_tone %>%
 #  meta data like speaker sex and speaker age needs to be extracted/joined from raw data extraction from Database
 
 meta_data_file <- meta_data_file %>% 
-  select(file, Speaker_Age, Speaker_Sex)
+  select(file, speaker_age, speaker_sex)
 
-rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word, meta_data_file, by = "file", multiple = "any")
+#rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word, meta_data_file, by = "file", multiple = "any")
 
-rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, languages_meta, by = "Glottocode", multiple = "any")
+#rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, languages_meta, by = "Glottocode", multiple = "any")
 
-rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, meta_data_morph_tone, by = "Glottocode", multiple = "any")
+#rhythm_results_doreco_word_meta<- left_join(rhythm_results_doreco_word_meta, meta_data_morph_tone, by = "Glottocode", multiple = "any")
 
 # for visualization we also produce a dataset where languages are ordered by median ioi-beat
 
-group_ordered_word <- with(rhythm_results_doreco_word_meta,                   # Order boxes by median
-                      reorder(Language,
-                              ioi_beat,
-                              median))
+#group_ordered_word <- with(rhythm_results_doreco_word_meta,                   # Order boxes by median
+#                      reorder(Language,
+#                              ioi_beat,
+#                              median))
 
-rhythm_results_doreco_word_ordered <- rhythm_results_doreco_word_meta                              
+#rhythm_results_doreco_word_ordered <- rhythm_results_doreco_word_meta                              
 # Create data with reordered group levels
-rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
-                             levels = levels(group_ordered_word))
+#rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
+#                             levels = levels(group_ordered_word))
 
 # ipu data -----
 
@@ -122,7 +123,7 @@ rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word
 #  rhythm_results_doreco_ipu <- rbind(rhythm_results_doreco_ipu, data)
 # }
 
-rhythm_results_doreco_ipu <- read_delim("language_data/results/rhythm_analysis_doreco_ipu_mean_apr24_fs_20.csv", delim = ",")
+rhythm_results_doreco_ipu <- read_delim("language_data/results/rhythm_analysis_mean_doreco_split_quantile99_fs_20.csv", delim = ",")
 
  for(i in 1:length(rhythm_results_doreco_ipu$filename)){
   names <- str_split(rhythm_results_doreco_ipu$filename[i], pattern = "_")
@@ -198,7 +199,7 @@ rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, heigh
 country_height_info <- rhythm_results_doreco_ipu_meta %>% 
   select(Longitude, Latitude, country, country_code, country_eng, avg_height)
 
-rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word_meta, country_height_info, by = c("Longitude", "Latitude"), multiple = "any")
+#rhythm_results_doreco_word_meta <- left_join(rhythm_results_doreco_word_meta, country_height_info, by = c("Longitude", "Latitude"), multiple = "any")
 
 
 
@@ -259,24 +260,6 @@ rhythm_results_doreco_word_meta <- rhythm_results_doreco_word_meta %>%
 
 ```
 
-```{r ipu_filter}
-# some files seem to have flawed raw data, we filter them out until we know what is going on
-# file: "ipu_language_resi1247_file_doreco-resi1247-storyalicia_speaker_resi1247-OG_runapr24.csv"
-
-rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
-  filter(filename != "ipu_language_resi1247_file_doreco-resi1247-storyalicia_speaker_resi1247-OG_runapr24.csv")
-  
-# This is a short term solution, to filter out datafiles with ioi beats < 0.2, because there are likely long silent pauses
-#these need to be dealt with consistently, best: split files and reanalyse
-# it is only 6 datapoints with ioi beat < 0.2
-
-
-#rhythm_results_doreco_ipu_meta_unfiltered <- rhythm_results_doreco_ipu_meta #backup copy
-
-rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
-  filter(ioi_beat>0.2)
-
-```
 
 ```{r ordered}
 # for visualization we also produce a dataset where languages and language family are ordered by median ioi-beat
@@ -313,9 +296,48 @@ rhythm_results_doreco_ipu_ordered$Family <- factor(rhythm_results_doreco_ipu_ord
 # Create data with reordered group levels
 #rhythm_results_doreco_word_ordered$Language <- factor(rhythm_results_doreco_word_ordered$Language,
  #                            levels = levels(group_ordered_ipu))
+
 ```
 
+```{r summarize}
+# after splitting file because of long silences, we summarize by file, to avoid pseudoreplication and inflation of n
 
+rhythm_results_doreco_ipu_meta_summarized_file <- rhythm_results_doreco_ipu_meta %>%
+  filter(!is.na(ioi_beat)) %>%
+  group_by(Family, file) %>%
+  summarize(across(where(is.numeric), mean, na.rm = TRUE), 
+            across(where(is.character), first), 
+            across(where(is.factor), first))
+
+
+rhythm_results_doreco_ipu_ordered_summarized_file <- rhythm_results_doreco_ipu_ordered %>%
+  filter(!is.na(ioi_beat)) %>%
+  group_by(Family, file) %>%
+  summarize(across(where(is.numeric), mean, na.rm = TRUE), 
+            across(where(is.character), first), 
+            across(where(is.factor), first))
+
+
+
+# both datasets are also summarized per Speaker, to avoid pseudo-replication
+
+rhythm_results_doreco_ipu_meta_summarized_speaker <- rhythm_results_doreco_ipu_meta %>%
+  filter(!is.na(ioi_beat)) %>%
+  group_by(Family, speaker) %>%
+  summarize(across(where(is.numeric), mean, na.rm = TRUE), 
+            across(where(is.character), first), 
+            across(where(is.factor), first))
+
+
+rhythm_results_doreco_ipu_ordered_summarized_speaker <- rhythm_results_doreco_ipu_ordered %>%
+  filter(!is.na(ioi_beat)) %>%
+  group_by(Family, speaker) %>%
+  summarize(across(where(is.numeric), mean, na.rm = TRUE), 
+            across(where(is.character), first), 
+            across(where(is.factor), first))
+
+
+```
 ## Data Summary
 
 ```{r map}
@@ -353,6 +375,7 @@ map
 ```{r summary_ipu}
 
 rhythm_results_doreco_ipu_meta %>%
+  group_by(speaker) %>% 
   select('ioi_beat', 'unbiased_cv', 'npvi', 'fourier_beat', 'n_elements') %>% 
   summary(na.rm = TRUE)
 ```
@@ -408,6 +431,52 @@ rhythm_results_doreco_ipu_meta %>%
 
 Now we plot IOI Beat [Hz] for the IPU Level per language and per language family. 
 
+```{r languages_ipu_bySpeaker}
+
+colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", 
+            "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#1f77b4", "#aec7e8", 
+            "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", 
+            "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", 
+            "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d")
+
+rhythm_results_doreco_ipu_ordered_summarized_speaker %>%
+  dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
+  group_by(speaker, Language) %>% 
+  ggplot(aes(y = ioi_beat, x = Language, fill = Family))+
+  geom_boxplot()+
+  geom_jitter(alpha = 0.2)+
+  theme_minimal()+
+   scale_fill_manual(values = colors)+
+  theme(#legend.position = "none",
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
+         legend.title = element_blank(),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.35, 'cm'))+
+  xlab("Languages")+
+  ylab("IPU Beat [Hz]")+
+  ggtitle("Grouped by Speaker")
+
+
+rhythm_results_doreco_ipu_ordered_summarized_speaker %>%
+  dplyr::filter(is.na(ioi_beat) == FALSE) %>%
+  dplyr::filter(Family != "Isolate") %>% 
+  group_by(speaker,Family) %>%
+  #group_by(Family) %>%
+  ggplot(aes(y = ioi_beat, x = Family, fill = Tone))+
+  geom_boxplot()+
+  geom_jitter(alpha = 0.2)+
+  theme_minimal()+
+  theme(#legend.position = "none",
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'))+
+  xlab("Language Family")+
+  ylab("IPU Beat [Hz]")+
+  ggtitle("Grouped by Speaker")
+
+```
+
 ```{r languages_ipu}
 
 colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", 
@@ -416,9 +485,9 @@ colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b",
             "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", 
             "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d")
 
-rhythm_results_doreco_ipu_ordered %>%
+rhythm_results_doreco_ipu_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
-  group_by(speaker.y, Language) %>% 
+  group_by(speaker, Language) %>% 
   ggplot(aes(y = ioi_beat, x = Language, fill = Family))+
   geom_boxplot()+
   geom_jitter(alpha = 0.2)+
@@ -433,10 +502,11 @@ rhythm_results_doreco_ipu_ordered %>%
   ylab("IPU Beat [Hz]")
 
 
-rhythm_results_doreco_ipu_ordered %>%
+rhythm_results_doreco_ipu_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>%
   dplyr::filter(Family != "Isolate") %>% 
-  group_by(speaker.y,Family) %>% 
+  #group_by(speaker,Family) %>%
+  group_by(Family) %>%
   ggplot(aes(y = ioi_beat, x = Family, fill = Tone))+
   geom_boxplot()+
   geom_jitter(alpha = 0.2)+
@@ -453,18 +523,18 @@ rhythm_results_doreco_ipu_ordered %>%
 
 ```{r sex_ipu, echo = FALSE, include=FALSE}
 
-rhythm_results_doreco_ipu_meta %>%
+rhythm_results_doreco_ipu_meta_summarized_file %>%
   drop_na(speaker_sex) %>%
-  group_by(speaker.y) %>% 
+  group_by(speaker) %>% 
   ggplot(aes(y = ioi_beat, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot()+
   #geom_jitter(aes( color = Language))
   theme_minimal()+
   xlab("IPU Level")
 
-  rhythm_results_doreco_ipu_meta %>%
+  rhythm_results_doreco_ipu_meta_summarized_file %>%
   drop_na(speaker_sex) %>%
-  group_by(speaker.y) %>%  
+  group_by(speaker) %>%  
   ggplot(aes(y = unbiased_cv, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot(outlier.shape = NA)+
   coord_cartesian(ylim = c(0,1))+
@@ -472,9 +542,9 @@ rhythm_results_doreco_ipu_meta %>%
   theme_minimal()+
   xlab("IPU Level")
   
-  rhythm_results_doreco_ipu_meta %>%
+  rhythm_results_doreco_ipu_meta_summarized_file %>%
   drop_na(speaker_sex) %>%
-  group_by(speaker.y) %>% 
+  group_by(speaker) %>% 
   ggplot(aes(y = npvi, x = speaker_sex, fill = speaker_sex))+
   geom_boxplot()+
   #coord_cartesian(ylim = c(0,1))+
@@ -489,7 +559,7 @@ We also want to visualize the effect of age on the IOI Beat on the IPU Level.
 ```{r age_median_ipu}
 
 # medium ioi beat per language vs. medium age per language
-median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = rhythm_results_doreco_ipu_meta, median)
+median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = rhythm_results_doreco_ipu_meta_summarized_file, median)
 
 # Create a scatter plot with median ioi_beat against median age
 ggplot(median_data, aes(x = speaker_age, y = ioi_beat)) +
@@ -505,7 +575,7 @@ ggplot(median_data, aes(x = speaker_age, y = ioi_beat)) +
 
 ```{r age_facet_ipu, fig.height=40, include=FALSE, echo=FALSE}
 
-rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ipu_meta_summarized_file %>% 
   ggplot(aes(x= speaker_age, y = ioi_beat ))+
   geom_jitter(aes(fill = Language, color = Language))+
   geom_smooth(method = "lm")+
@@ -518,7 +588,7 @@ rhythm_results_doreco_ipu_meta %>%
 
 
 ```{r age_ipu}
-rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ipu_meta_summarized_file %>% 
   ggplot(aes(x= speaker_age, y = ioi_beat ))+
   geom_jitter(aes(fill = Language, color = Language))+
   geom_smooth(method = "lm")+
@@ -534,9 +604,9 @@ between tonal and non-tonal languages.
 
 ```{r typo_info_ipu}
 
-rhythm_results_doreco_ipu_meta %>%
+rhythm_results_doreco_ipu_meta_summarized_file %>%
   filter(is.na(Tone) == FALSE) %>%
-  group_by(speaker.y) %>% 
+  group_by(speaker) %>% 
   ggplot(aes(x= Tone, y = ioi_beat ))+
   geom_boxplot()+
   geom_jitter(size= 0.5, alpha = 0.5)+
@@ -545,8 +615,8 @@ rhythm_results_doreco_ipu_meta %>%
   xlab(' Tonal Language')+
   ylab("IPU beat [Hz]")
   
-rhythm_results_doreco_ipu_meta %>%
-  group_by(speaker.y) %>% 
+rhythm_results_doreco_ipu_meta_summarized_file %>%
+  group_by(speaker) %>% 
   ggplot(aes(x= Complexity, y = ioi_beat, group = Complexity ))+
   geom_boxplot()+
   geom_jitter(size= 0.5, alpha = 0.5)+
@@ -562,7 +632,7 @@ What can we say about different areas of the world?
 
 ```{r area_ipu}
 
-rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ipu_meta_summarized_file %>% 
   ggplot(aes(x= Area, y = ioi_beat ))+
   geom_boxplot()+
   geom_jitter(size= 0.5, alpha = 0.5)+
@@ -579,7 +649,7 @@ And how does the IOI Beat relate to the average height of people in the country 
 
 ```{r height_ipu}
 
-rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ipu_meta_summarized_file %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
   geom_jitter(alpha = 0.5, aes(color = Area))+
   geom_smooth(method = "lm")+
