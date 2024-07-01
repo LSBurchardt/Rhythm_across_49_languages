@@ -439,7 +439,7 @@ colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b",
             "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", 
             "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d")
 
-rhythm_results_doreco_ipu_ordered_summarized_speaker %>%
+  rhythm_results_doreco_ipu_ordered_summarized_speaker %>%   
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
   group_by(speaker, Language) %>% 
   ggplot(aes(y = ioi_beat, x = Language, fill = Family))+
@@ -453,11 +453,12 @@ rhythm_results_doreco_ipu_ordered_summarized_speaker %>%
         legend.text = element_text(size = 7),
         legend.key.size = unit(0.35, 'cm'))+
   xlab("Languages")+
-  ylab("IPU Beat [Hz]")+
+  ylab("IPU Beat [Hz]") +
   ggtitle("Grouped by Speaker")
 
 
-rhythm_results_doreco_ipu_ordered_summarized_speaker %>%
+ rhythm_results_doreco_ipu_ordered_summarized_speaker %>% 
+  rhythm_results_doreco_ipu_ordered %>% 
   dplyr::filter(is.na(ioi_beat) == FALSE) %>%
   dplyr::filter(Family != "Isolate") %>% 
   group_by(speaker,Family) %>%
@@ -517,7 +518,8 @@ rhythm_results_doreco_ipu_ordered_summarized_file %>%
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, 'cm'))+
   xlab("Language Family")+
-  ylab("IPU Beat [Hz]")
+  ylab("IPU Beat [Hz]")+
+  ggtitle("Tonal Language -- Yes or No")
 
 ```
 
