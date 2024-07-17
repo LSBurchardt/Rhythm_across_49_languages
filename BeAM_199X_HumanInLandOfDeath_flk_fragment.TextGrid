@@ -1,0 +1,136 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 3.290999999999997 
+tiers? <exists> 
+size = 4 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "text-dolgan" 
+        xmin = 0 
+        xmax = 3.290999999999997 
+        intervals: size = 5 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.47800000000000864 
+            text = "(pause)" 
+        intervals [2]:
+            xmin = 0.47800000000000864 
+            xmax = 1.8969999999999914 
+            text = "Hɨ͡anɨ keːste u͡otugar." 
+        intervals [3]:
+            xmin = 1.8969999999999914 
+            xmax = 2.320999999999998 
+            text = "(pause)" 
+        intervals [4]:
+            xmin = 2.320999999999998 
+            xmax = 3.0649999999999977 
+            text = "Innʼen baraːn..." 
+        intervals [5]:
+            xmin = 3.0649999999999977 
+            xmax = 3.290999999999997 
+            text = "(pause)" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "text-english" 
+        xmin = 0 
+        xmax = 3.290999999999997 
+        intervals: size = 5 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.47800000000000864 
+            text = "" 
+        intervals [2]:
+            xmin = 0.47800000000000864 
+            xmax = 1.8969999999999914 
+            text = "He threw the fat into the fire." 
+        intervals [3]:
+            xmin = 1.8969999999999914 
+            xmax = 2.320999999999998 
+            text = "" 
+        intervals [4]:
+            xmin = 2.320999999999998 
+            xmax = 3.0649999999999977 
+            text = "After that..." 
+        intervals [5]:
+            xmin = 3.0649999999999977 
+            xmax = 3.290999999999997 
+            text = "" 
+    item [3]:
+        class = "IntervalTier" 
+        name = "word-dolgan" 
+        xmin = 0 
+        xmax = 3.290999999999997 
+        intervals: size = 8 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.47800000000000864 
+            text = "" 
+        intervals [2]:
+            xmin = 0.47800000000000864 
+            xmax = 0.86099999999999 
+            text = "Hɨ͡anɨ" 
+        intervals [3]:
+            xmin = 0.86099999999999 
+            xmax = 1.3029999999999973 
+            text = "keːste" 
+        intervals [4]:
+            xmin = 1.3029999999999973 
+            xmax = 1.8969999999999914 
+            text = "u͡otugar" 
+        intervals [5]:
+            xmin = 1.8969999999999914 
+            xmax = 2.320999999999998 
+            text = "" 
+        intervals [6]:
+            xmin = 2.320999999999998 
+            xmax = 2.7009999999999934 
+            text = "Innʼen" 
+        intervals [7]:
+            xmin = 2.7009999999999934 
+            xmax = 3.0649999999999977 
+            text = "baraːn" 
+        intervals [8]:
+            xmin = 3.0649999999999977 
+            xmax = 3.290999999999997 
+            text = "" 
+    item [4]:
+        class = "IntervalTier" 
+        name = "word-english" 
+        xmin = 0 
+        xmax = 3.290999999999997 
+        intervals: size = 8 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.47800000000000864 
+            text = "" 
+        intervals [2]:
+            xmin = 0.47800000000000864 
+            xmax = 0.86099999999999 
+            text = "fat" 
+        intervals [3]:
+            xmin = 0.86099999999999 
+            xmax = 1.3029999999999973 
+            text = "he_threw" 
+        intervals [4]:
+            xmin = 1.3029999999999973 
+            xmax = 1.8969999999999914 
+            text = "to_fire" 
+        intervals [5]:
+            xmin = 1.8969999999999914 
+            xmax = 2.320999999999998 
+            text = "" 
+        intervals [6]:
+            xmin = 2.320999999999998 
+            xmax = 2.7009999999999934 
+            text = "so" 
+        intervals [7]:
+            xmin = 2.7009999999999934 
+            xmax = 3.0649999999999977 
+            text = "after" 
+        intervals [8]:
+            xmin = 3.0649999999999977 
+            xmax = 3.290999999999997 
+            text = "" 
