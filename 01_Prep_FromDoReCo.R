@@ -39,7 +39,7 @@ metadata <- read.csv("csvs/metadata_merged_1_3.csv", na.strings = "na")
 metadata$file <- paste("doreco_",metadata$lang,"_",metadata$name,sep="")
 io_merged <- merge(io_data,metadata,by="file")
 
-# Remove non-core speakers, i.e. data without proper time alignment for words and pauses
+# Remove non-core speakers, i.e. speakers without human-verified time alignment for words and pauses
 io_clean <- subset(io_merged, (speaker %in% c(spk_code_a, spk_code_b)))
 
 # Remove conversational and stimulus-based data
