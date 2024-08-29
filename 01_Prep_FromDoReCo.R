@@ -36,7 +36,7 @@ io_data <- wd_csv_data %>%
 
 # Read speaker-level metadata CSV and merge dataframes
 metadata <- read.csv("csvs/metadata_merged_1_3.csv", na.strings = "na")
-metadata$file <- paste("doreco_",metadata$glottocode,"_",metadata$filename,sep="")
+metadata$file <- paste("doreco_",metadata$lang,"_",metadata$filename,sep="")
 io_merged <- merge(io_data,metadata,by="file")
 
 # Remove non-core speakers, i.e. data without proper time alignment for words and pauses
