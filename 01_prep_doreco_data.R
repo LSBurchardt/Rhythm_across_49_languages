@@ -1,18 +1,12 @@
-if (!require(install.load)) {
-  install.packages("install.load")
-}
+library(tidyverse)
+library(dplyr)
 
-library(install.load)
-
-install_load("purrr", "stringr", "dplyr", "readr")
-
-
-### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval ###
-### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R ###
+### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval (IOI) ###
+### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R, as well as the manually coded info on tone languages in DoReCo_1_3_tone.csv ###
 
 # Read word-level CSV files from DoReCo 1.3
-csv_dir = "..."
-setwd("...")
+csv_dir = "C:/ling/00_projects/biology/wd_csv"
+setwd("C:/ling/00_projects/biology")
 wd_csv_files <- list.files(path = csv_dir, pattern = "\\_wd.csv$", full.names = TRUE, recursive = TRUE)
 wd_csv_data <- map_df(wd_csv_files, readr::read_csv)
 
@@ -23,11 +17,12 @@ wd_csv_data$speaker <- paste(wd_csv_data$lang,"_",wd_csv_data$speaker,sep="")
 wd_csv_data <- wd_csv_data %>% mutate(duration = round(end - start, 3))
 
 # Identify IO units, calculate duration, check for labels, assign corpus-wide running integer
+# Automatically discards non-core datasets as only core datasets contain ph values
 io_data <- wd_csv_data %>%
   mutate(across(.cols = everything(), ~ifelse(. == "<<wip>>", "<p:>", .))) %>%
   group_by(file, speaker) %>%
   mutate(is_sequence_start = (ph != "<p:>" & lag(ph, default = first(ph)) == "<p:>") | row_number() == 1,
-         io_unit = cumsum(is_sequence_start)) %>% 
+         io_unit = cumsum(is_sequence_start)) %>%
   group_by(file, speaker, io_unit) %>%
   filter(!(ph == "<p:>" & io_unit == 1)) %>%
   summarise(start_time = first(start),
@@ -68,13 +63,17 @@ io_clean <- io_merged %>%
 synth_data <- read.csv("DoReCo_1_3_core_synthesis.csv")
 io_synth <- merge(io_clean, synth_data, by="lang", all.x = TRUE)
 
+# Merge tone data
+tone_data <- read.csv("DoReCo_1_3_tone.csv")
+io_tone <- merge(io_synth, tone_data, by="lang", all.x = TRUE)
+
 # Cleaning up
-io_final <- io_synth %>%
+io_final <- io_tone %>%
   rename(glottocode = lang,
          speaker_sex = spk_sex_a,
          speaker_age = spk_age_a) %>%
   arrange(io_unit) %>%
-  select(file,speaker,io_unit,start_time,end_time,pause_duration,io_duration,genre,glottocode,speaker_age,speaker_sex,synthesis)
+  select(file,speaker,io_unit,start_time,end_time,pause_duration,io_duration,genre,glottocode,speaker_age,speaker_sex,synthesis,tone)
 
 # Write to a new CSV file
-write_csv(io_final, "DoReCo_1_3_IO_20240920.csv")
+write_csv(io_final, "DoReCo_1_3_IO_20240923.csv")
