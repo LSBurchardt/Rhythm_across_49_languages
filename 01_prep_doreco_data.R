@@ -5,8 +5,8 @@ library(dplyr)
 ### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R, as well as the manually coded info on tone languages in DoReCo_1_3_tone.csv ###
 
 # Read word-level CSV files from DoReCo 1.3
-csv_dir = "C:/ling/00_projects/biology/wd_csv"
-setwd("C:/ling/00_projects/biology")
+csv_dir = "..."
+setwd("...")
 wd_csv_files <- list.files(path = csv_dir, pattern = "\\_wd.csv$", full.names = TRUE, recursive = TRUE)
 wd_csv_data <- map_df(wd_csv_files, readr::read_csv)
 
