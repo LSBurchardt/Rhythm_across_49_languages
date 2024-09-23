@@ -1,7 +1,11 @@
-library(purrr)
-library(readr)
-library(dplyr)
-library(stringr)
+if (!require(install.load)) {
+  install.packages("install.load")
+}
+
+library(install.load)
+
+install_load("purrr", "stringr", "dplyr", "readr")
+
 
 ### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval ###
 ### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R ###
