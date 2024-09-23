@@ -2,7 +2,7 @@ library(tidyverse)
 library(dplyr)
 
 ### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval (IOI) ###
-### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R, as well as the manually coded info on tone languages in DoReCo_1_3_tone.csv ###
+### It also merges the metadata extracted in 00a_metadata.R and the synthesis scores created in 00b_synthesis.R, as well as the manually coded info on tone languages in DoReCo_1_3_tone.csv ###
 
 # Read word-level CSV files from DoReCo 1.3
 csv_dir = "..."
