@@ -28,7 +28,7 @@ install_load("tidyverse", "stringr")
 # 01b: load data ----
 
 
-data_ipu <- read_delim("DoReCo_1_3_IO_20240920.csv", delim = ",")
+data_ipu <- read_delim("DoReCo_1_3_IO_20240923.csv", delim = ",")
 
 # 02: preparations ----
 
@@ -47,11 +47,12 @@ data_ipu$file <- str_replace_all(data_ipu$file, "_", "-")
 
 data_ipu$speaker <- str_replace_all(data_ipu$speaker, "_", "-")
 
-# save filtered data table, to access meta data after rhythm analysis
+# add column "speech_duration" 
 
-write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Sept24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+data_ipu$sprach_dauer <-data_ipu$io_duration-data_ipu$pause_duration
 
-# 03: file separation ----
+
+# 03: file separation & saving ----
 
 # per file and speaker we need to check for long silent pauses, when a pause is in 99th Quantile (longest 1%), we split
 # the file there, we name them part 1, part 2, part 3, ...to include this column as a grouping column in the group_walk
@@ -60,7 +61,7 @@ write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_met
 # calculating cut_off
 pause_cutoff <- quantile(data_ipu$pause_duration, .99)
 
-# defining function for splitting
+# defining function for splitting due to silent breaks
 
 assign_part <- function(df) {
   part_counter <- 1
@@ -75,14 +76,16 @@ assign_part <- function(df) {
   return(df)
 }
 
-#adding column "part"
+#adding column "part" indicating sequences seperated by silent breaks
 
 data_ipu <- data_ipu %>%
   group_by(file, speaker) %>%
   do(assign_part(.)) %>%
   ungroup()
 
-data_ipu$sprach_dauer <-data_ipu$io_duration-data_ipu$pause_duration
+# save prepared data table in full, to access meta data after rhythm analysis and to analyse io durations, pause durations etc. across dataset
+
+write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Sept24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
 
 # saving individual csv files to be used in RANTO app
 
