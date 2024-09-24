@@ -94,7 +94,14 @@ heights <- heights %>%
 
 heights_avg <- heights %>%
   group_by(country_eng) %>%
-  summarise(avg_height = mean(Height, na.rm = TRUE))
+  group_by(country_eng) %>%
+  summarise(earliest_height = Height[which.min(Year)],  # height of the earliest year
+            earliest_year_height = min(Year),           # earliest year of average height measurment
+            latest_height = Height[which.max(Year)],    # Get height for the latest year
+            latest_year_height = max(Year),             # latest year of average height measurments
+            avg_height = mean(Height, na.rm = TRUE),
+            max_height = max(Height, na.rm = TRUE),
+            min_height = min(Height, na.rm = TRUE))
 
 
 rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, heights_avg, by = "country_eng", multiple = "any")
@@ -102,4 +109,11 @@ rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, heigh
 
 # 04: save final results table
 
-saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta.rds")
+# deselect some columns, that we do not need for the analysis for better clarity
+
+rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
+  select(-mean_min_dev_ioi, -mean_min_dev_fft, -fourier_beat, -ugof_fft,
+         -silent_beats_fft, -silent_beats_ioi, -npvi_ugof_fft, -cv_ugof_fft,
+         -freq_reso, -signal_length, -elements, -raw_element_seq)
+
+saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta_complete.rds")
