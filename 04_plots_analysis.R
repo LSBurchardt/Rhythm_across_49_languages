@@ -7,7 +7,8 @@
 
 # Plots and Analyses for rhythm analysis
 
-
+###LP: Globally: Replace IPU by IOI (?)
+###LP: Rename repository from "DoReCo" to something more specific like "IOI beat across languages"
 
 ###############################################################################
 
@@ -122,9 +123,9 @@ map <- ggplot() +
   geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Add points
   ylab("Latitute [°]")+
   xlab("Longitude [°]")+
-  ggtitle("Where are the languages spoken?")
+  ggtitle("Where are the languages spoken?")  ###LP: Change title to `Geographic distribution of the 49 languages in our sample'
 
-map
+map ###LP: Can this map be made centered around the International Date Line? This would be a nice-to-have, not high-priority
 
 ## 03b: ioi distribution plots -----
 
@@ -151,7 +152,7 @@ doreco_rhythm_results_complete %>%
 ## ioi beat language/ language family plots -----
 
 #languages_ipu
-
+###LP: How are languages sorted ?
 doreco_rhythm_results_complete_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
   group_by(speaker, Language) %>% 
@@ -169,7 +170,7 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
   ylab("IPU Beat [Hz]")+
   my_custom_theme
 
-
+###LP: I would not use this plot as aggregating tone lgs by family makes no sense 
 doreco_rhythm_results_complete_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>%
   dplyr::filter(Family != "Isolate") %>% 
@@ -198,7 +199,8 @@ doreco_rhythm_results_complete_summarized_file %>%
   geom_boxplot()+
   #geom_jitter(aes( color = Language))
   theme_minimal()+
-  xlab("IPU Level")
+  xlab("IPU Level") ###LP: change to: "Sex"
+  ###LP: add ylab("IOI Beat [Hz]")
 
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
@@ -208,7 +210,8 @@ doreco_rhythm_results_complete_summarized_file %>%
   coord_cartesian(ylim = c(0,1))+
   #geom_jitter(aes( color = Language))
   theme_minimal()+
-  xlab("IPU Level")
+  xlab("IPU Level") ###LP: change to: "Sex"
+  ###LP: add ylab("IOI Beat [Hz]")
 
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
@@ -218,7 +221,8 @@ doreco_rhythm_results_complete_summarized_file %>%
   #coord_cartesian(ylim = c(0,1))+
   #geom_jitter(aes( color = Language))
   theme_minimal()+
-  xlab("IPU Level")
+  xlab("IPU Level") ###LP: change to: "Sex"
+  ###LP: add ylab("IOI Beat [Hz]")
 
 ## 03d age differences -----
 
@@ -226,6 +230,7 @@ doreco_rhythm_results_complete_summarized_file %>%
 median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = doreco_rhythm_results_complete_summarized_file, median)
 
 # Create a scatter plot with median ioi_beat against median age
+### LP: I would remove this plot, don't see the need to average per language
 ggplot(median_data, aes(x = speaker_age, y = ioi_beat)) +
   geom_point() +
   geom_smooth(method = "lm")+
@@ -267,7 +272,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Tonal Language')+
+  xlab(' Tonal Language')+###LP: 'Tone Language'
   ylab("IPU beat [Hz]")+
   my_custom_theme
 
@@ -278,7 +283,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   geom_smooth(method = "lm")+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Morphological Complexity ')+
+  xlab(' Morphological Complexity ')+###LP: 'Morphological synthesis'
   ylab("IPU beat [Hz]")+
   my_custom_theme
 
