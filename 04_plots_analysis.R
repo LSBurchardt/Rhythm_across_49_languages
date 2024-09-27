@@ -7,8 +7,8 @@
 
 # Plots and Analyses for rhythm analysis
 
-###LP: Globally: Replace IPU by IOI (?)
-###LP: Rename repository from "DoReCo" to something more specific like "IOI beat across languages"
+###LP: Globally: Replace IPU by IOI (?) -- done
+###LP: Rename repository from "DoReCo" to something more specific like "IOI beat across languages" -- done 
 
 ###############################################################################
 
@@ -42,7 +42,7 @@ my_custom_theme <- theme_minimal() +
     axis.title = element_text(size = 18),
     legend.text = element_text(size = 14),
     legend.title = element_text(size = 16),
-    axis.text.x = element_text(angle = 90, hjust = 1)
+    axis.text.x = element_text(angle = 0, hjust = 0.5)
   )
 
 # 01: load data ----- 
@@ -97,7 +97,7 @@ doreco_rhythm_results_complete_ordered_summarized_file <- doreco_rhythm_results_
 
 # 03: plots ----
 
-# 03a: map plot ----
+## 03a: map plot ----
 
 # map plot, where are languages spoken?
 unique_coords <- unique(doreco_rhythm_results_complete[, c("Latitude", "Longitude")])
@@ -112,6 +112,8 @@ map_world <- ggplot2::map_data('world')
 land.colour   <- "grey75"
 border.colour <- "grey10"
 basemap= map_world
+
+
 xmin= -140
 xmax= 180
 ymin= -50
@@ -123,36 +125,42 @@ map <- ggplot() +
   geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Add points
   ylab("Latitute [°]")+
   xlab("Longitude [°]")+
-  ggtitle("Where are the languages spoken?")  ###LP: Change title to `Geographic distribution of the 49 languages in our sample'
+  my_custom_theme
+  #ggtitle("Where are the languages spoken?")  ###LP: Change title to `Geographic distribution of the 49 languages in our sample'
+###LSB I wanted to delete the title anyway, but add this as a legend to the plot in the manuscript
 
-map ###LP: Can this map be made centered around the International Date Line? This would be a nice-to-have, not high-priority
+map ###LP: Can this map be made centered around the International Date Line? This would be a nice-to-have, not high-priority --
+###LSB we talked about this before, I tried a few different ways but couldn't find an easy way to do that with this plotting version
 
 ## 03b: ioi distribution plots -----
 
 ## ioi plots 
-doreco_rhythm_results_complete %>% 
+hist_ioi <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= ioi_beat))+
   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
                  color = "white", fill = "darkblue")+
   theme_minimal()+
   ylab("Percentage [%]")+
-  xlab("IPU Beat [Hz]")+
+  xlab("IOI Beat [Hz]")+
+  annotate("text", x = 0.6, y = 9, label = "n = 1535")+
   my_custom_theme
 
-doreco_rhythm_results_complete %>% 
+hist_cv <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= unbiased_cv))+
   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
                  color = "white", fill = "darkblue", binwidth = 0.25)+
   theme_minimal()+
   ylab("Percentage [%]")+
-  xlab("CV of IPU Durations")+
+  xlab("CV of IOI Durations")+
+  annotate("text", x = 1.5, y = 20, label = "n = 1535")+
   my_custom_theme
 
 
-## ioi beat language/ language family plots -----
+## ioi beat language/ language family plots
 
 #languages_ipu
-###LP: How are languages sorted ?
+###LP: How are languages sorted ? --- see 02a, median ioi beat of language/language family
+
 doreco_rhythm_results_complete_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
   group_by(speaker, Language) %>% 
@@ -167,16 +175,16 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
     legend.text = element_text(size = 7),
     legend.key.size = unit(0.35, 'cm'))+
   xlab("Languages")+
-  ylab("IPU Beat [Hz]")+
+  ylab("IOI Beat [Hz]")+
   my_custom_theme
 
-###LP: I would not use this plot as aggregating tone lgs by family makes no sense 
+
 doreco_rhythm_results_complete_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>%
   dplyr::filter(Family != "Isolate") %>% 
   #group_by(speaker,Family) %>%
   group_by(Family) %>%
-  ggplot(aes(y = ioi_beat, x = Family, fill = tone))+
+  ggplot(aes(y = ioi_beat, x = Family))+
   geom_boxplot()+
   geom_jitter(alpha = 0.2)+
   theme_minimal()+
@@ -186,7 +194,7 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
     legend.text = element_text(size = 8),
     legend.key.size = unit(0.4, 'cm'))+
   xlab("Language Family")+
-  ylab("IPU Beat [Hz]")+
+  ylab("IOI Beat [Hz]")+
   ggtitle("Tonal Language -- Yes or No")
 
 
@@ -195,34 +203,40 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
   group_by(speaker) %>% 
-  ggplot(aes(y = ioi_beat, x = speaker_sex, fill = speaker_sex))+
-  geom_boxplot()+
-  #geom_jitter(aes( color = Language))
+  ggplot(aes(y = ioi_beat, x = speaker_sex))+
+  geom_boxplot(outliers = FALSE)+
+  geom_jitter(alpha = 0.3, size = 0.8)+
   theme_minimal()+
-  xlab("IPU Level") ###LP: change to: "Sex"
-  ###LP: add ylab("IOI Beat [Hz]")
+  xlab("Gender")+
+  ylab("IOI Beat [Hz]")+
+  my_custom_theme+
+  scale_x_discrete(labels = c("f" = "Female", "m" = "Male"))
 
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
   group_by(speaker) %>%  
-  ggplot(aes(y = unbiased_cv, x = speaker_sex, fill = speaker_sex))+
-  geom_boxplot(outlier.shape = NA)+
-  coord_cartesian(ylim = c(0,1))+
-  #geom_jitter(aes( color = Language))
+  ggplot(aes(y = unbiased_cv, x = speaker_sex))+
+  geom_boxplot(outliers = FALSE)+
+  coord_cartesian(ylim = c(0.15,1.5))+
+  geom_jitter(alpha = 0.3, size = 0.8)+
   theme_minimal()+
-  xlab("IPU Level") ###LP: change to: "Sex"
-  ###LP: add ylab("IOI Beat [Hz]")
+  xlab("Gender")+
+  ylab("Coefficient of Variation")+
+  my_custom_theme+
+  scale_x_discrete(labels = c("f" = "Female", "m" = "Male"))
 
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
   group_by(speaker) %>% 
-  ggplot(aes(y = npvi, x = speaker_sex, fill = speaker_sex))+
-  geom_boxplot()+
+  ggplot(aes(y = npvi, x = speaker_sex))+
+  geom_boxplot(outliers = FALSE)+
   #coord_cartesian(ylim = c(0,1))+
-  #geom_jitter(aes( color = Language))
+  geom_jitter(alpha = 0.3, size = 0.8)+
   theme_minimal()+
-  xlab("IPU Level") ###LP: change to: "Sex"
-  ###LP: add ylab("IOI Beat [Hz]")
+  xlab("Gender")+
+  ylab("nPVI")+
+  my_custom_theme+
+  scale_x_discrete(labels = c("f" = "Female", "m" = "Male"))
 
 ## 03d age differences -----
 
@@ -231,76 +245,79 @@ median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = doreco_
 
 # Create a scatter plot with median ioi_beat against median age
 ### LP: I would remove this plot, don't see the need to average per language
+###LSB: we discussed this, to avoid seeing a bias of differences in median age spoken per language
+# I think this was actually your idea
 ggplot(median_data, aes(x = speaker_age, y = ioi_beat)) +
   geom_point() +
-  geom_smooth(method = "lm")+
-  labs(title = "Median IPU Beat [Hz] vs. Median Age per Language",
-       x = "Median Age",
-       y = "Median IPU beat [Hz]") +
+  geom_smooth(method = "lm", color = "darkgrey")+
+  labs(x = "Median Age per Language",
+       y = "Median IOI Beat [Hz] per Language") +
   theme_minimal()+
   my_custom_theme
 
 # age as facet plot
-doreco_rhythm_results_complete_summarized_file %>% 
-  ggplot(aes(x= speaker_age, y = ioi_beat ))+
-  geom_jitter(aes(fill = Language, color = Language))+
-  geom_smooth(method = "lm")+
-  facet_grid(rows = vars(Family))+
-  theme_minimal()+
-  xlab('Speaker Age ')+
-  ylab("IPU beat [Hz]")+
-  my_custom_theme
+# doreco_rhythm_results_complete_summarized_file %>% 
+#   ggplot(aes(x= speaker_age, y = ioi_beat ))+
+#   geom_jitter(aes(fill = Language, color = Language))+
+#   geom_smooth(method = "lm")+
+#   facet_grid(rows = vars(Family))+
+#   theme_minimal()+
+#   xlab('Speaker Age ')+
+#   ylab("IOI beat [Hz]")
+ 
 
 # age against ioi beat directly (potentially biased because of differences in age structure per language)
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= speaker_age, y = ioi_beat ))+
-  geom_jitter(aes(fill = Language, color = Language))+
-  geom_smooth(method = "lm")+
+  geom_jitter(alpha = 0.8, size = 0.8)+
+  geom_smooth(method = "lm", color = "darkgrey")+
   theme_minimal()+
   theme(legend.position = "none")+
   xlab('Speaker Age ')+
-  ylab("IPU beat [Hz]")+
+  ylab("IOI beat [Hz]")+
   my_custom_theme
 
-## tone and morphological complexity ----
+## 03e: tone and morphological complexity ----
 
 doreco_rhythm_results_complete_summarized_file %>%
   filter(is.na(tone) == FALSE) %>%
   group_by(speaker) %>% 
   ggplot(aes(x= tone, y = ioi_beat ))+
-  geom_boxplot()+
+  geom_boxplot(outliers = FALSE)+
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Tonal Language')+###LP: 'Tone Language'
-  ylab("IPU beat [Hz]")+
-  my_custom_theme
+  xlab(' Tone Language')+
+  ylab("IOI beat [Hz]")+
+  my_custom_theme+
+  scale_x_discrete(labels = c("no" = "No", "yes" = "Yes"))
+  
 
 doreco_rhythm_results_complete_summarized_file %>%
   group_by(speaker) %>% 
   ggplot(aes(x= synthesis, y = ioi_beat ))+
   geom_point()+
-  geom_smooth(method = "lm")+
+  geom_smooth(method = "lm", color = "darkgrey")+
   theme_minimal()+
   theme(legend.position = "none")+
-  xlab(' Morphological Complexity ')+###LP: 'Morphological synthesis'
-  ylab("IPU beat [Hz]")+
+  xlab('Morphological Synthesis')+
+  ylab("IOI beat [Hz]")+
   my_custom_theme
 
 
-## different continents ----
+## 03f: different continents ----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= Area, y = ioi_beat ))+
-  geom_boxplot()+
+  geom_boxplot(outliers = FALSE)+
   geom_jitter(size= 0.5, alpha = 0.5)+
   theme_minimal()+
   theme(legend.position = "none")+
   xlab(' Area')+
-  ylab("IPU beat [Hz]")+
+  ylab("IOI beat [Hz]")+
   my_custom_theme
 
-## height information -----
+## 03g: height information -----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
@@ -308,11 +325,26 @@ doreco_rhythm_results_complete_summarized_file %>%
   geom_smooth(method = "lm")+
   theme_minimal()+
   xlab('Average Height per Country [cm]')+
-  ylab("IPU beat [Hz]")+
-  my_custom_theme
+  ylab("IOI beat [Hz]")+
+  my_custom_theme+
+  scale_color_manual(values = colors)
 
+# 04: plot grids -----
 
-# 04: statistics -----
+## 04a: Figure 1 ----
+
+# Map, Histograms for IOI and CV distribution 
+
+hist_plots <- cowplot::plot_grid(hist_ioi, hist_cv,
+                   labels = c("C", "D"))
+
+cowplot::plot_grid(map, hist_plots,
+                   labels = c("B", "", ""), nrow = 2)
+
+ggsave("manuscript_figure1_part2.jpg", dpi = 300,
+       width = 20,
+       height = 16)
+# 05: statistics -----
 
 # summarize
 
