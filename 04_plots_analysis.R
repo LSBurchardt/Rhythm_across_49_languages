@@ -119,6 +119,9 @@ xmax= 180
 ymin= -50
 ymax= 75
 
+map_world$long<-map_world$long+180
+
+
 map <- ggplot() +
   coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
   geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
@@ -132,6 +135,48 @@ map <- ggplot() +
 map ###LP: Can this map be made centered around the International Date Line? This would be a nice-to-have, not high-priority --
 ###LSB we talked about this before, I tried a few different ways but couldn't find an easy way to do that with this plotting version
 
+### SF: after a long time with chatgpt and the internet - may still need some nicer output
+### Load required libraries
+library(maps)         # For map data
+library(dplyr)        # For data manipulation
+
+# Create a dataframe with unique coordinates of your data
+unique_coords <- unique(doreco_rhythm_results_complete[, c("Latitude", "Longitude")])
+unique_coords_df <- data.frame(
+  lon = unique_coords$Longitude,
+  lat = unique_coords$Latitude
+)
+
+# Adjust longitudes to reflect the 0-360 range
+unique_coords_df <- unique_coords_df %>%
+  mutate(lon = ifelse(lon < 0, lon + 360, lon))
+
+# Fortify the map data
+mp1 <- fortify(map(fill=TRUE, plot=FALSE))
+mp2 <- mp1
+mp2$long <- mp2$long + 360
+mp2$group <- mp2$group + max(mp2$group) + 1
+mp <- rbind(mp1, mp2)
+
+# Create the base plot with the world map
+ggplot() +  # No aesthetics here
+  geom_path(data = mp, aes(x = long, y = lat, group = group), fill = "grey75", color = "grey10") +  # World map outline
+  geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Your points
+  scale_x_continuous(limits = c(0, 360)) +  # Set x limits
+  coord_fixed(ratio = 1) +  # Ensure aspect ratio is fixed
+  theme_minimal() + 
+  theme(
+    panel.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_text(size = 12, vjust = -0.5),
+    axis.title.y = element_text(size = 12, vjust = 0.5)
+  ) +
+  labs(
+    x = "Longitude [°]",
+    y = "Latitude [°]"
+  )
+
 ## 03b: ioi distribution plots -----
 
 ## ioi plots 
@@ -144,6 +189,7 @@ hist_ioi <- doreco_rhythm_results_complete %>%
   xlab("IOI Beat [Hz]")+
   annotate("text", x = 0.6, y = 9, label = "n = 1535")+
   my_custom_theme
+print(hist_ioi)
 
 hist_cv <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= unbiased_cv))+
@@ -154,12 +200,14 @@ hist_cv <- doreco_rhythm_results_complete %>%
   xlab("CV of IOI Durations")+
   annotate("text", x = 1.5, y = 20, label = "n = 1535")+
   my_custom_theme
-
+print(hist_cv)
 
 ## ioi beat language/ language family plots
 
 #languages_ipu
 ###LP: How are languages sorted ? --- see 02a, median ioi beat of language/language family
+###SF: In the first plot we would have to adjust the X axis categories 
+###but I guess you prefer the second - I don't understand the title about tonal languages
 
 doreco_rhythm_results_complete_ordered_summarized_file %>%
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
@@ -292,7 +340,8 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme+
   scale_x_discrete(labels = c("no" = "No", "yes" = "Yes"))
   
-
+###SF: Can you explain how morphological synsthesis is calculated. For each speaker here?
+### This means the lower the morphological complexity the higher the IOI beat? 
 doreco_rhythm_results_complete_summarized_file %>%
   group_by(speaker) %>% 
   ggplot(aes(x= synthesis, y = ioi_beat ))+
@@ -344,6 +393,7 @@ cowplot::plot_grid(map, hist_plots,
 ggsave("manuscript_figure1_part2.jpg", dpi = 300,
        width = 20,
        height = 16)
+
 # 05: statistics -----
 
 # summarize
@@ -352,3 +402,31 @@ doreco_rhythm_results_complete %>%
   group_by(speaker) %>% 
   select('ioi_beat', 'unbiased_cv', 'npvi', 'n_elements') %>% 
   summary(na.rm = TRUE)
+
+
+# SF: effect of tone on ioi_beat?
+m1<-lmer(ioi_beat~tone+(1+tone|speaker)+(1+tone|Family), data=doreco_rhythm_results_complete)
+summary(m1)
+qqnorm(residuals(m1))
+
+
+# SF: effect of morphology on ioi_beat? This model is not perfect
+m2<-lmer(ioi_beat~scale(synthesis)+(0+scale(synthesis)|speaker)+(1+scale(synthesis)|Family), data=doreco_rhythm_results_complete)
+summary(m2)
+qqnorm(residuals(m2))
+
+# Speaker effects due to gender, age?
+m3<-lmer(ioi_beat~speaker_sex+(1+speaker_sex|Family), data=doreco_rhythm_results_complete)
+summary(m3)
+qqnorm(residuals(m3))
+
+m4<-lmer(ioi_beat~scale(speaker_age)+(1+scale(speaker_age)|Family), data=doreco_rhythm_results_complete)
+summary(m4)
+qqnorm(residuals(m4))
+
+m5<-lmer(ioi_beat~scale(avg_height)+(1+scale(avg_height)|Family), data=doreco_rhythm_results_complete)
+summary(m5)
+qqnorm(residuals(m5))
+
+
+
