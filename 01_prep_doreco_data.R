@@ -1,8 +1,8 @@
 library(tidyverse)
-library(dplyr)
 
 ### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval (IOI) ###
-### It also merges the metadata extracted in 00a_metadata.R and the synthesis scores created in 00b_synthesis.R, as well as the manually coded info on tone languages in DoReCo_1_3_tone.csv ###
+### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R ###
+### Lastly, the script merge the manually coded info on tone languages in DoReCo_1_3_tone.csv and the geographical data (sourced from Glottolog) in DoReCo_1_3_geo.csv ###
 
 # Read word-level CSV files from DoReCo 1.3
 csv_dir = "..."
@@ -67,13 +67,17 @@ io_synth <- merge(io_clean, synth_data, by="lang", all.x = TRUE)
 tone_data <- read.csv("DoReCo_1_3_tone.csv")
 io_tone <- merge(io_synth, tone_data, by="lang", all.x = TRUE)
 
+# Merge geographical data
+geo_data <- read.csv("DoReCo_1_3_geo.csv")
+io_geo <- merge(io_tone, geo_data, by="lang", all.x = TRUE)
+
 # Cleaning up
-io_final <- io_tone %>%
+io_final <- io_geo %>%
   rename(glottocode = lang,
          speaker_sex = spk_sex_a,
          speaker_age = spk_age_a) %>%
   arrange(io_unit) %>%
-  select(file,speaker,io_unit,start_time,end_time,pause_duration,io_duration,genre,glottocode,speaker_age,speaker_sex,synthesis,tone)
+  select(file,speaker,io_unit,start_time,end_time,pause_duration,io_duration,genre,glottocode,speaker_age,speaker_sex,synthesis,tone,language,family,area,latitude,longitude)
 
 # Write to a new CSV file
-write_csv(io_final, "DoReCo_1_3_IO_20240923.csv")
+write_csv(io_final, "DoReCo_1_3_IO_20240928.csv")
