@@ -22,7 +22,7 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools")
+install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools", "lme4")
 
 ## 00b: prepare themes, color pallettes, etc. ----
 
@@ -202,6 +202,27 @@ hist_cv <- doreco_rhythm_results_complete %>%
   my_custom_theme
 print(hist_cv)
 
+# density plot of all calculated ioi beats across all the dataset
+
+#density_ioibeat <- 
+  doreco_rhythm_results_complete %>% 
+  ggplot(aes(x = ioi_beat))+
+  geom_density()+
+  geom_vline(xintercept = 0.58202, linetype="dotted" )+  # zscore > 2, corresponding ioi beat
+  geom_vline(xintercept = 0.17289, linetype="dotted")+  # zscore < -2, corresponding ioi beat
+  geom_jitter(aes(y = -1, color = Language), alpha = 0.5, size = 0.5)+
+  #annotate("text", x = 0.7, y = 3, label = "n = 1535")+
+  annotate("text", x = 0.1, y = -0.3, label = "n = 44")+
+  annotate("text", x = 0.1, y = 2, label = expression("z-score "<="-2"))+
+  annotate("text", x = 0.37, y = -0.3, label = "n = 1448")+
+  annotate("text", x = 0.7, y = -0.3, label = "n = 43")+
+  annotate("text", x = 0.7, y = 2, label = expression("z-score ">="2"))+  
+  ylab("Density")+
+  xlab("IOI Beat [Hz]")+
+  my_custom_theme
+
+ggsave("plot_density_zscore.jpg", dpi = 300,
+       width = )
 ## ioi beat language/ language family plots
 
 #languages_ipu
@@ -242,8 +263,7 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
     legend.text = element_text(size = 8),
     legend.key.size = unit(0.4, 'cm'))+
   xlab("Language Family")+
-  ylab("IOI Beat [Hz]")+
-  ggtitle("Tonal Language -- Yes or No")
+  ylab("IOI Beat [Hz]")
 
 
 ## 03c: sex differences ----
@@ -404,6 +424,35 @@ doreco_rhythm_results_complete %>%
   summary(na.rm = TRUE)
 
 
+## 05a: z-scores ----
+
+mean_ioi_beat <- mean(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
+sd_ioi_beat <- sd(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
+
+z_scores <- as.numeric((doreco_rhythm_results_complete$ioi_beat - mean_ioi_beat) / sd_ioi_beat)
+
+language_zscore <- as.data.frame(cbind(as.numeric(z_scores), doreco_rhythm_results_complete$Language, as.numeric(doreco_rhythm_results_complete$ioi_beat)))
+language_zscore <- language_zscore %>% 
+  mutate(zscores = as.numeric(z_scores),
+         ioi_beat = as.numeric(V3),
+         language = V2) %>% 
+  select(zscores, ioi_beat, language)
+
+outlier_indices_top <- language_zscore %>% 
+  filter(z_scores >= 2)
+
+min(outlier_indices_top$ioi_beat)
+
+outlier_indices_bottom <- language_zscore %>% 
+  filter(z_scores <= -2)
+max(outlier_indices_bottom$ioi_beat)
+
+
+## 05a: t-test between different groups ----
+
+
+
+## 05b linear mixed models -----
 # SF: effect of tone on ioi_beat?
 m1<-lmer(ioi_beat~tone+(1+tone|speaker)+(1+tone|Family), data=doreco_rhythm_results_complete)
 summary(m1)
