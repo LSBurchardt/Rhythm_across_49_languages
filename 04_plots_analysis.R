@@ -95,6 +95,35 @@ doreco_rhythm_results_complete_ordered_summarized_file <- doreco_rhythm_results_
             across(where(is.character), first), 
             across(where(is.factor), first))
 
+## 02c: z-scores ----
+
+mean_ioi_beat <- mean(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
+sd_ioi_beat <- sd(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
+
+z_scores <- as.numeric((doreco_rhythm_results_complete$ioi_beat - mean_ioi_beat) / sd_ioi_beat)
+z_scores <- as.data.frame(z_scores)
+
+language_zscore <- as.data.frame(cbind(as.numeric(z_scores), doreco_rhythm_results_complete$Language, as.numeric(doreco_rhythm_results_complete$ioi_beat)))
+language_zscore <- language_zscore %>% 
+  mutate(zscores = as.numeric(z_scores),
+         ioi_beat = as.numeric(V3),
+         language = V2) %>% 
+  select(zscores, ioi_beat, language)
+
+outlier_indices_top <- language_zscore %>% 
+  filter(z_scores >= 2)
+
+min(outlier_indices_top$ioi_beat) # vertical line x-position for density plot 
+
+outlier_indices_bottom <- language_zscore %>% 
+  filter(z_scores <= -2)
+max(outlier_indices_bottom$ioi_beat) # vertical line x-position for density plot
+
+doreco_rhythm_results_complete <- cbind(doreco_rhythm_results_complete, z_scores)
+
+all_zscore_outliers <- doreco_rhythm_results_complete %>% 
+  filter(z_scores >= 2 | z_scores <= -2)
+
 # 03: plots ----
 
 ## 03a: map plot ----
@@ -202,6 +231,7 @@ hist_cv <- doreco_rhythm_results_complete %>%
   my_custom_theme
 print(hist_cv)
 
+## 03c: zscore plots ----
 # density plot of all calculated ioi beats across all the dataset
 
 #density_ioibeat <- 
@@ -222,8 +252,49 @@ print(hist_cv)
   my_custom_theme
 
 ggsave("plot_density_zscore.jpg", dpi = 300,
-       width = )
-## ioi beat language/ language family plots
+       width = 12,
+       height = 4)
+
+## what are the outliers? is there a trend here? age? 
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= unbiased_cv, y = z_scores))+
+  geom_point()+
+  geom_smooth()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= npvi, y = z_scores))+
+  geom_point()+
+  geom_smooth()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= n_elements, y = z_scores))+
+  geom_point()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= synthesis, y = z_scores))+
+  geom_point()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= speaker_age, y = z_scores))+
+  geom_point()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x = speaker_sex, y = z_scores))+
+  geom_boxplot()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= speaker_age, y = avg_height))+
+  geom_point()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x = Area, y = z_scores))+
+  geom_boxplot()
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x = tone, y = z_scores))+
+  geom_boxplot()
+
+## 03d: ioi beat language/ language family plots ----
 
 #languages_ipu
 ###LP: How are languages sorted ? --- see 02a, median ioi beat of language/language family
@@ -245,7 +316,8 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
     legend.key.size = unit(0.35, 'cm'))+
   xlab("Languages")+
   ylab("IOI Beat [Hz]")+
-  my_custom_theme
+  my_custom_theme+
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5))
 
 
 doreco_rhythm_results_complete_ordered_summarized_file %>%
@@ -254,7 +326,7 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
   #group_by(speaker,Family) %>%
   group_by(Family) %>%
   ggplot(aes(y = ioi_beat, x = Family))+
-  geom_boxplot()+
+  geom_boxplot(outliers = FALSE)+
   geom_jitter(alpha = 0.2)+
   theme_minimal()+
   theme(#legend.position = "none",
@@ -266,7 +338,7 @@ doreco_rhythm_results_complete_ordered_summarized_file %>%
   ylab("IOI Beat [Hz]")
 
 
-## 03c: sex differences ----
+## 03e: sex differences ----
 
 doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
@@ -306,7 +378,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme+
   scale_x_discrete(labels = c("f" = "Female", "m" = "Male"))
 
-## 03d age differences -----
+## 03f age differences -----
 
 # medium ioi beat per language vs. medium age per language
 median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = doreco_rhythm_results_complete_summarized_file, median)
@@ -345,7 +417,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   ylab("IOI beat [Hz]")+
   my_custom_theme
 
-## 03e: tone and morphological complexity ----
+## 03g: tone and morphological complexity ----
 
 doreco_rhythm_results_complete_summarized_file %>%
   filter(is.na(tone) == FALSE) %>%
@@ -374,7 +446,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme
 
 
-## 03f: different continents ----
+## 03h: different continents ----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= Area, y = ioi_beat ))+
@@ -386,7 +458,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   ylab("IOI beat [Hz]")+
   my_custom_theme
 
-## 03g: height information -----
+## 03i: height information -----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
@@ -424,28 +496,7 @@ doreco_rhythm_results_complete %>%
   summary(na.rm = TRUE)
 
 
-## 05a: z-scores ----
 
-mean_ioi_beat <- mean(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
-sd_ioi_beat <- sd(doreco_rhythm_results_complete$ioi_beat, na.rm = TRUE)
-
-z_scores <- as.numeric((doreco_rhythm_results_complete$ioi_beat - mean_ioi_beat) / sd_ioi_beat)
-
-language_zscore <- as.data.frame(cbind(as.numeric(z_scores), doreco_rhythm_results_complete$Language, as.numeric(doreco_rhythm_results_complete$ioi_beat)))
-language_zscore <- language_zscore %>% 
-  mutate(zscores = as.numeric(z_scores),
-         ioi_beat = as.numeric(V3),
-         language = V2) %>% 
-  select(zscores, ioi_beat, language)
-
-outlier_indices_top <- language_zscore %>% 
-  filter(z_scores >= 2)
-
-min(outlier_indices_top$ioi_beat)
-
-outlier_indices_bottom <- language_zscore %>% 
-  filter(z_scores <= -2)
-max(outlier_indices_bottom$ioi_beat)
 
 
 ## 05a: t-test between different groups ----
