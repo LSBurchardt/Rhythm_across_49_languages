@@ -22,11 +22,11 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools", "lme4")
+install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools", "lme4", "maps")
 
-## 00b: prepare themes, color pallettes, etc. ----
+## 00b: prepare themes, color palettes, etc. ----
 
-# color blind friendly pallette with 28 colors for language families
+# color blind friendly palette with 28 colors for language families
 
 colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", 
             "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#1f77b4", "#aec7e8", 
@@ -49,6 +49,7 @@ my_custom_theme <- theme_minimal() +
 
 doreco_rhythm_results_complete <- read_rds("rhythm_results_doreco_ipu_meta_complete.rds")
 
+ioi_data <- read_delim("iois_doreco_ipu_99quantilebreaks.csv", delim = ",")
 
 # 02: data wrangling ----
 
@@ -136,47 +137,6 @@ unique_coords_df <- data.frame(
   lon = unique_coords$Longitude,
   lat = unique_coords$Latitude)
 
-
-map_world <- ggplot2::map_data('world')
-land.colour   <- "grey75"
-border.colour <- "grey10"
-basemap= map_world
-
-
-xmin= -140
-xmax= 180
-ymin= -50
-ymax= 75
-
-map_world$long<-map_world$long+180
-
-
-map <- ggplot() +
-  coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
-  geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
-  geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Add points
-  ylab("Latitute [°]")+
-  xlab("Longitude [°]")+
-  my_custom_theme
-  #ggtitle("Where are the languages spoken?")  ###LP: Change title to `Geographic distribution of the 49 languages in our sample'
-###LSB I wanted to delete the title anyway, but add this as a legend to the plot in the manuscript
-
-map ###LP: Can this map be made centered around the International Date Line? This would be a nice-to-have, not high-priority --
-###LSB we talked about this before, I tried a few different ways but couldn't find an easy way to do that with this plotting version
-
-### SF: after a long time with chatgpt and the internet - may still need some nicer output
-### Load required libraries
-library(maps)         # For map data
-library(dplyr)        # For data manipulation
-
-# Create a dataframe with unique coordinates of your data
-unique_coords <- unique(doreco_rhythm_results_complete[, c("Latitude", "Longitude")])
-unique_coords_df <- data.frame(
-  lon = unique_coords$Longitude,
-  lat = unique_coords$Latitude
-)
-
-# Adjust longitudes to reflect the 0-360 range
 unique_coords_df <- unique_coords_df %>%
   mutate(lon = ifelse(lon < 0, lon + 360, lon))
 
@@ -188,7 +148,8 @@ mp2$group <- mp2$group + max(mp2$group) + 1
 mp <- rbind(mp1, mp2)
 
 # Create the base plot with the world map
-ggplot() +  # No aesthetics here
+
+map <- ggplot() +  # No aesthetics here
   geom_path(data = mp, aes(x = long, y = lat, group = group), fill = "grey75", color = "grey10") +  # World map outline
   geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Your points
   scale_x_continuous(limits = c(0, 360)) +  # Set x limits
@@ -206,10 +167,26 @@ ggplot() +  # No aesthetics here
     y = "Latitude [°]"
   )
 
+
 ## 03b: ioi distribution plots -----
 
-## ioi plots 
-hist_ioi <- doreco_rhythm_results_complete %>% 
+## raw interval distribution
+
+hist_ioi_raw <- ioi_data %>% 
+  ggplot(aes(x= ioi))+
+  geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
+                 color = "white", fill = "darkblue", bins = 100)+
+  theme_minimal()+
+  coord_cartesian(xlim = c(0,10))+
+  ylab("Percentage [%]")+
+  xlab("IOI [sec]")+
+  #annotate("text", x = 0.6, y = 9, label = "n = 1535")+
+  my_custom_theme
+print(hist_ioi_raw)
+
+
+## ioi beat plots 
+hist_ioi_beat <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= ioi_beat))+
   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
                  color = "white", fill = "darkblue")+
@@ -218,7 +195,7 @@ hist_ioi <- doreco_rhythm_results_complete %>%
   xlab("IOI Beat [Hz]")+
   annotate("text", x = 0.6, y = 9, label = "n = 1535")+
   my_custom_theme
-print(hist_ioi)
+print(hist_ioi_beat)
 
 hist_cv <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= unbiased_cv))+
@@ -445,6 +422,10 @@ doreco_rhythm_results_complete_summarized_file %>%
   ylab("IOI beat [Hz]")+
   my_custom_theme
 
+cor(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$synthesis,
+    na.rm = TRUE)
+
+cohen.d
 
 ## 03h: different continents ----
 
@@ -476,7 +457,7 @@ doreco_rhythm_results_complete_summarized_file %>%
 
 # Map, Histograms for IOI and CV distribution 
 
-hist_plots <- cowplot::plot_grid(hist_ioi, hist_cv,
+hist_plots <- cowplot::plot_grid(hist_ioi_beat, hist_cv,
                    labels = c("C", "D"))
 
 cowplot::plot_grid(map, hist_plots,
@@ -499,7 +480,53 @@ doreco_rhythm_results_complete %>%
 
 
 
-## 05a: t-test between different groups ----
+## 05a: correlations and effect sizes ----
+
+
+### effect sizes ----
+# (cohen's D, psych package)
+# effect size gender
+
+men <- doreco_rhythm_results_complete %>% 
+  filter(speaker_sex == "m")
+women <- doreco_rhythm_results_complete %>% 
+  filter(speaker_sex == "f")
+
+cohen.d(men$ioi_beat, women$ioi_beat)
+# d = 0,13 --> negligible
+
+t.test(men$ioi_beat, women$ioi_beat, var.equal = FALSE)
+
+# effect size tone language
+
+toneyes <- doreco_rhythm_results_complete %>% 
+  filter(tone == "yes")
+toneno <- doreco_rhythm_results_complete %>% 
+  filter(tone == "no")
+
+cohen.d(toneyes$ioi_beat, toneno$ioi_beat)
+# d = -0.12 --> negligible
+
+t.test(toneyes$ioi_beat, toneno$ioi_beat, var.equal = FALSE)
+
+### correlations ----
+
+# correlation with median age
+
+corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$speaker_age)
+r <- -0.01
+R_squared <- r^2
+R_squared
+# ~ 0.01 % of variance are explained by age --> negligible
+
+# correlation with morphological synthesis
+
+corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$synthesis)
+r <- -0.12
+R_squared_2 <- r^2
+R_squared_2
+# 1.44% of variance explained, so even though statistically significant, very small effect size
+
 
 
 
