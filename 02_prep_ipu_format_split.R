@@ -83,6 +83,9 @@ data_ipu <- data_ipu %>%
   do(assign_part(.)) %>%
   ungroup()
 
+data_ipu <- data_ipu %>% 
+  filter(pause_duration < pause_cutoff)
+
 # save prepared data table in full, to access meta data after rhythm analysis and to analyse io durations, pause durations etc. across dataset
 
 write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Sept24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
