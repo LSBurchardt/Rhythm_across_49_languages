@@ -23,7 +23,7 @@ install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools")
 # 01: load data ----- 
 
 ## rhythm results
-rhythm_results_doreco_ipu <- read_delim("rhythm_analysis_results/rhythm_analysis_mean_doreco_ipu_99quantilebreaks_fs_20.csv", delim = ",")
+rhythm_results_doreco_ipu <- read_delim("rhythm_analysis_results/rhythm_analysis_median_ipu_99quantilebreaks_fs_20_new.csv", delim = ",")
 
 # meta data
 
