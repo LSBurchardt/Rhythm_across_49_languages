@@ -119,9 +119,100 @@ all_zscore_outliers <- doreco_rhythm_results_complete %>%
 
 n_elements_95 <- nrow(doreco_rhythm_results_complete)-nrow(all_zscore_outliers)
 
-# 03: plots ----
+# 03: statistics -----
 
-## 03a: map plot ----
+# summarize
+
+doreco_rhythm_results_complete %>%
+  group_by(speaker) %>% 
+  select('ioi_beat', 'unbiased_cv', 'npvi', 'n_elements') %>% 
+  summary(na.rm = TRUE)
+
+
+
+
+
+## 03a: correlations and effect sizes ----
+
+
+### effect sizes ----
+# (cohen's D, psych package)
+# effect size gender
+
+men <- doreco_rhythm_results_complete %>% 
+  filter(speaker_sex == "m")
+women <- doreco_rhythm_results_complete %>% 
+  filter(speaker_sex == "f")
+
+d_gender <- cohen.d(men$ioi_beat, women$ioi_beat)
+# d = 0.13 --> negligible
+
+t.test(men$ioi_beat, women$ioi_beat, var.equal = FALSE)
+
+# effect size tone language
+
+toneyes <- doreco_rhythm_results_complete %>% 
+  filter(tone == "yes")
+toneno <- doreco_rhythm_results_complete %>% 
+  filter(tone == "no")
+
+d_tone <- cohen.d(toneyes$ioi_beat, toneno$ioi_beat)
+# d = -0.12 --> negligible
+
+t.test(toneyes$ioi_beat, toneno$ioi_beat, var.equal = FALSE)
+
+### correlations ----
+
+# correlation with median age
+
+cor_age <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$speaker_age)
+r_age <- cor_age$r
+R_squared_age <- r_age^2
+
+# ~ 0.01 % of variance are explained by age --> negligible
+
+# correlation with morphological synthesis
+
+cor_morph <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$synthesis)
+r_morph <- cor_morph$r
+R_squared_morph <- r_morph^2
+
+# 1.44% of variance explained, so even though statistically significant, very small effect size
+
+
+
+
+## 03b linear mixed models -----
+# SF: effect of tone on ioi_beat?
+m1<-lmer(ioi_beat~tone+(1+tone|speaker)+(1+tone|Family), data=doreco_rhythm_results_complete)
+summary(m1)
+qqnorm(residuals(m1))
+
+
+# SF: effect of morphology on ioi_beat? This model is not perfect
+m2<-lmer(ioi_beat~scale(synthesis)+(0+scale(synthesis)|speaker)+(1+scale(synthesis)|Family), data=doreco_rhythm_results_complete)
+summary(m2)
+qqnorm(residuals(m2))
+
+# Speaker effects due to gender, age?
+m3<-lmer(ioi_beat~speaker_sex+(1+speaker_sex|Family), data=doreco_rhythm_results_complete)
+summary(m3)
+qqnorm(residuals(m3))
+
+m4<-lmer(ioi_beat~scale(speaker_age)+(1+scale(speaker_age)|Family), data=doreco_rhythm_results_complete)
+summary(m4)
+qqnorm(residuals(m4))
+
+m5<-lmer(ioi_beat~scale(avg_height)+(1+scale(avg_height)|Family), data=doreco_rhythm_results_complete)
+summary(m5)
+qqnorm(residuals(m5))
+
+
+
+
+# 04: plots ----
+
+## 04a: map plot ----
 
 # map plot, where are languages spoken?
 unique_coords <- unique(doreco_rhythm_results_complete[, c("Latitude", "Longitude")])
@@ -162,7 +253,7 @@ map <- ggplot() +  # No aesthetics here
   )
 
 
-## 03b: ioi distribution plots -----
+## 04b: ioi distribution plots -----
 
 ## raw interval distribution
 
@@ -202,7 +293,7 @@ hist_cv <- doreco_rhythm_results_complete %>%
   my_custom_theme
 print(hist_cv)
 
-## 03c: zscore plots ----
+## 04c: zscore plots ----
 # density plot of all calculated ioi beats across all the dataset
 
 density_ioibeat <- 
@@ -264,7 +355,7 @@ doreco_rhythm_results_complete %>%
   ggplot(aes(x = tone, y = z_scores))+
   geom_boxplot()
 
-## 03d: ioi beat language/ language family plots ----
+## 04d: ioi beat language/ language family plots ----
 
 #languages_ipu
 
@@ -305,7 +396,7 @@ doreco_rhythm_results_complete_ordered %>%
   ylab("IOI Beat [Hz]")
 
 
-## 03e: sex differences ----
+## 04e: sex differences ----
 
 box_gender <- doreco_rhythm_results_complete_summarized_file %>%
   drop_na(speaker_sex) %>%
@@ -346,7 +437,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme+
   scale_x_discrete(labels = c("f" = "Female", "m" = "Male"))
 
-## 03f age differences -----
+## 04f age differences -----
 
 # medium ioi beat per language vs. medium age per language
 median_data <- aggregate(cbind(speaker_age, ioi_beat) ~ Language, data = doreco_rhythm_results_complete_summarized_file, median)
@@ -377,7 +468,7 @@ scatter_age <- doreco_rhythm_results_complete_summarized_file %>%
   annotate("text", x = 80, y = 0.8, label = paste("R² =", round(R_squared_age, 3)), size = 5)
   
 
-## 03g: tone and morphological complexity ----
+## 04g: tone and morphological complexity ----
 
 box_tone <- doreco_rhythm_results_complete_summarized_file %>%
   filter(is.na(tone) == FALSE) %>%
@@ -413,7 +504,7 @@ scatter_morph <- doreco_rhythm_results_complete_summarized_file %>%
   annotate("text", x = 3, y = 0.8, label = paste("R² =", round(R_squared_morph, 2)), size = 5)
 
 
-## 03h: different continents ----
+## 04h: different continents ----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= Area, y = ioi_beat ))+
@@ -425,7 +516,7 @@ doreco_rhythm_results_complete_summarized_file %>%
   ylab("IOI beat [Hz]")+
   my_custom_theme
 
-## 03i: height information -----
+## 04i: height information -----
 
 doreco_rhythm_results_complete_summarized_file %>% 
   ggplot(aes(x= avg_height, y = ioi_beat ))+
@@ -437,9 +528,9 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme+
   scale_color_manual(values = colors)
 
-# 04: plot grids -----
+# 05: plot grids -----
 
-## 04a: Figure 1 ----
+## 05a: Figure 1 ----
 
 # Explanation (fig to be added elsewhere) Map, Histograms IOI distribution [sec]  
 
@@ -453,7 +544,7 @@ ggsave("manuscript_figure1_part2.jpg", dpi = 300,
        width = 20,
        height = 16)
 
-## 04b: Figure 2-----
+## 05b: Figure 2-----
 
 # Density Plot & Language Boxplots
 
@@ -467,7 +558,7 @@ ggsave("manuscript_figure2.jpg", dpi = 300,
        height = 26,
        units = "cm")
 
-## 04c: Figure 3 ----
+## 05c: Figure 3 ----
 
 cowplot::plot_grid(scatter_age, scatter_morph,
                    box_gender, box_tone, ncol = 2,
@@ -478,94 +569,5 @@ ggsave("manuscript_figure3.jpg", dpi = 300,
        width = 22,
        height = 20,
        units = "cm")
-
-# 05: statistics -----
-
-# summarize
-
-doreco_rhythm_results_complete %>%
-  group_by(speaker) %>% 
-  select('ioi_beat', 'unbiased_cv', 'npvi', 'n_elements') %>% 
-  summary(na.rm = TRUE)
-
-
-
-
-
-## 05a: correlations and effect sizes ----
-
-
-### effect sizes ----
-# (cohen's D, psych package)
-# effect size gender
-
-men <- doreco_rhythm_results_complete %>% 
-  filter(speaker_sex == "m")
-women <- doreco_rhythm_results_complete %>% 
-  filter(speaker_sex == "f")
-
-d_gender <- cohen.d(men$ioi_beat, women$ioi_beat)
-# d = 0.13 --> negligible
-
-t.test(men$ioi_beat, women$ioi_beat, var.equal = FALSE)
-
-# effect size tone language
-
-toneyes <- doreco_rhythm_results_complete %>% 
-  filter(tone == "yes")
-toneno <- doreco_rhythm_results_complete %>% 
-  filter(tone == "no")
-
-d_tone <- cohen.d(toneyes$ioi_beat, toneno$ioi_beat)
-# d = -0.12 --> negligible
-
-t.test(toneyes$ioi_beat, toneno$ioi_beat, var.equal = FALSE)
-
-### correlations ----
-
-# correlation with median age
-
-cor_age <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$speaker_age)
-r_age <- cor_age$r
-R_squared_age <- r_age^2
-
-# ~ 0.01 % of variance are explained by age --> negligible
-
-# correlation with morphological synthesis
-
-cor_morph <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_results_complete$synthesis)
-r_morph <- cor_morph$r
-R_squared_morph <- r_morph^2
-
-# 1.44% of variance explained, so even though statistically significant, very small effect size
-
-
-
-
-## 05b linear mixed models -----
-# SF: effect of tone on ioi_beat?
-m1<-lmer(ioi_beat~tone+(1+tone|speaker)+(1+tone|Family), data=doreco_rhythm_results_complete)
-summary(m1)
-qqnorm(residuals(m1))
-
-
-# SF: effect of morphology on ioi_beat? This model is not perfect
-m2<-lmer(ioi_beat~scale(synthesis)+(0+scale(synthesis)|speaker)+(1+scale(synthesis)|Family), data=doreco_rhythm_results_complete)
-summary(m2)
-qqnorm(residuals(m2))
-
-# Speaker effects due to gender, age?
-m3<-lmer(ioi_beat~speaker_sex+(1+speaker_sex|Family), data=doreco_rhythm_results_complete)
-summary(m3)
-qqnorm(residuals(m3))
-
-m4<-lmer(ioi_beat~scale(speaker_age)+(1+scale(speaker_age)|Family), data=doreco_rhythm_results_complete)
-summary(m4)
-qqnorm(residuals(m4))
-
-m5<-lmer(ioi_beat~scale(avg_height)+(1+scale(avg_height)|Family), data=doreco_rhythm_results_complete)
-summary(m5)
-qqnorm(residuals(m5))
-
 
 
