@@ -300,14 +300,14 @@ density_ioibeat <-
   doreco_rhythm_results_complete %>% 
   ggplot(aes(x = ioi_beat))+
   geom_density()+
-  geom_vline(xintercept = 0.58202, linetype="dotted", linewidth = 2 )+  # zscore > 2, corresponding ioi beat
-  geom_vline(xintercept = 0.17289, linetype="dotted", linewidth = 2)+  # zscore < -2, corresponding ioi beat
+  geom_vline(xintercept = min_outlier, linetype="dotted", linewidth = 2 )+  # zscore > 2, corresponding ioi beat
+  geom_vline(xintercept = max_outlier, linetype="dotted", linewidth = 2)+  # zscore < -2, corresponding ioi beat
   geom_jitter(aes(y = -1, color = Language), alpha = 0.5, size = 0.5)+
   annotate("text", x = 0.1, y = -0.3, label = paste("n =", n_outliers_bottom), size = 5)+
-  annotate("text", x = 0.1, y = 2, label = expression("Z-Score "<="-1,96"), size = 5)+
-  annotate("text", x = 0.37, y = -0.3, label = paste("n =",n_elements_95 ), size = 5)+
-  annotate("text", x = 0.7, y = -0.3, label = paste("n =", n_outliers_top), size = 5)+
-  annotate("text", x = 0.7, y = 2, label = expression("Z-Score ">="1,96"), size = 5)+  
+  annotate("text", x = max_outlier-0.1, y = 2, label = expression("Z-Score "<="-1,96"), size = 5)+
+  annotate("text", x = 0.45, y = -0.3, label = paste("n =",n_elements_95 ), size = 5)+
+  annotate("text", x = 1, y = -0.3, label = paste("n =", n_outliers_top), size = 5)+
+  annotate("text", x = 1, y = 2, label = expression("Z-Score ">="1,96"), size = 5)+  
   ylab("Density")+
   xlab("IOI Beat [Hz]")+
   my_custom_theme
@@ -534,11 +534,11 @@ doreco_rhythm_results_complete_summarized_file %>%
 
 # Explanation (fig to be added elsewhere) Map, Histograms IOI distribution [sec]  
 
-hist_plots <- cowplot::plot_grid(hist_ioi_beat, hist_cv,
+hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,
                    labels = c("C", "D"))
 
-cowplot::plot_grid(map, hist_plots,
-                   labels = c("B", "", ""), nrow = 2)
+cowplot::plot_grid(map, hist_ioi_raw,
+                   labels = c("A", "B"), nrow = 2)
 
 ggsave("manuscript_figure1_part2.jpg", dpi = 300,
        width = 20,
@@ -554,7 +554,7 @@ cowplot::plot_grid(density_ioibeat, boxplot_languages,
                    labels = c("A", "B"))
 
 ggsave("manuscript_figure2.jpg", dpi = 300,
-       width = 24,
+       width = 28,
        height = 26,
        units = "cm")
 
