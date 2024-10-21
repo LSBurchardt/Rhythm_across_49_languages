@@ -63,15 +63,35 @@ pause_cutoff <- quantile(data_ipu$pause_duration, .99)
 
 # defining function for splitting due to silent breaks
 
-assign_part <- function(df) {
+assign_part <- function(df, pause_cutoff) {
   part_counter <- 1
   parts <- c()
-  for (pause in df$pause_duration) {
+  
+  # Initialize the first io_unit
+  previous_io_unit <- df$io_unit[1]
+  
+  for (i in seq_along(df$pause_duration)) {
+    pause <- df$pause_duration[i]
+    io_unit <- df$io_unit[i]
+    
+    # Condition for pause duration exceeding cutoff
     if (pause > pause_cutoff) {
       part_counter <- part_counter + 1
     }
+    
+    # Condition for io_unit jumps larger than 1 (indicating filtering and therefor none consecutive intervals)
+    if (i > 1 && io_unit - previous_io_unit > 1) {
+      part_counter <- part_counter + 1
+    }
+    
+    # Updating parts vector
     parts <- c(parts, paste0("part", part_counter))
+    
+    # Updating previous io_unit
+    previous_io_unit <- io_unit
   }
+  
+  # Add the parts column to the dataframe
   df$part <- parts
   return(df)
 }
@@ -83,6 +103,8 @@ data_ipu <- data_ipu %>%
   do(assign_part(.)) %>%
   ungroup()
 
+
+# we filter out the rows with too long silent breaks, to actually exclude those intervals from the analysis
 data_ipu <- data_ipu %>% 
   filter(pause_duration < pause_cutoff)
 
