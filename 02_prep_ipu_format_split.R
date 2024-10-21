@@ -63,7 +63,7 @@ pause_cutoff <- quantile(data_ipu$pause_duration, .99)
 
 # defining function for splitting due to silent breaks
 
-assign_part <- function(df, pause_cutoff) {
+assign_part <- function(df) {
   part_counter <- 1
   parts <- c()
   
@@ -110,7 +110,7 @@ data_ipu <- data_ipu %>%
 
 # save prepared data table in full, to access meta data after rhythm analysis and to analyse io durations, pause durations etc. across dataset
 
-write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Sept24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
 
 # saving individual csv files to be used in RANTO app
 
