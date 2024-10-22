@@ -51,6 +51,8 @@ doreco_rhythm_results_complete <- read_rds("rhythm_results_doreco_ipu_meta_compl
 
 ioi_data <- read_delim("iois_ipu_99quantilebreaks_means.csv", delim = ",")
 
+ioi_data_alternative <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", delim = ",")
+
 # 02: data wrangling ----
 
 ## 02a: sort median ioi beat ----
@@ -145,9 +147,10 @@ women <- doreco_rhythm_results_complete %>%
   filter(speaker_sex == "f")
 
 d_gender <- cohen.d(men$ioi_beat, women$ioi_beat)
-# d = 0.13 --> negligible
+# d = 0.10 --> negligible
 
 t.test(men$ioi_beat, women$ioi_beat, var.equal = FALSE)
+# p = 0.0002 --> significant but negligible
 
 # effect size tone language
 
@@ -157,9 +160,10 @@ toneno <- doreco_rhythm_results_complete %>%
   filter(tone == "no")
 
 d_tone <- cohen.d(toneyes$ioi_beat, toneno$ioi_beat)
-# d = -0.12 --> negligible
+# d = 0.09 --> negligible
 
 t.test(toneyes$ioi_beat, toneno$ioi_beat, var.equal = FALSE)
+# p = 0.006 --> significant but negligible, change to former results most likely due to large sample size
 
 ### correlations ----
 
@@ -169,7 +173,7 @@ cor_age <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_resu
 r_age <- cor_age$r
 R_squared_age <- r_age^2
 
-# ~ 0.01 % of variance are explained by age --> negligible
+# ~ 0.013 % of variance are explained by age --> negligible
 
 # correlation with morphological synthesis
 
@@ -177,7 +181,7 @@ cor_morph <- corr.test(doreco_rhythm_results_complete$ioi_beat, doreco_rhythm_re
 r_morph <- cor_morph$r
 R_squared_morph <- r_morph^2
 
-# 1.44% of variance explained, so even though statistically significant, very small effect size
+# 1.08% of variance explained, so even though statistically significant, very small effect size
 
 
 
@@ -257,12 +261,13 @@ map <- ggplot() +  # No aesthetics here
 
 ## raw interval distribution
 
-hist_ioi_raw <- ioi_data %>% 
-  ggplot(aes(x= ioi))+
+hist_ioi_raw <- ioi_data_alternative %>% 
+  ggplot(aes(x= io_duration))+
   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
                  color = "white", fill = "darkblue", bins = 100)+
   theme_minimal()+
-  #coord_cartesian(xlim = c(0,10))+
+  coord_cartesian(xlim = c(0,10))+
+  annotate("text", x = 5, y = 5, label = paste("n =", nrow(ioi_data_alternative)), size = 6)+
   ylab("Percentage [%]")+
   xlab("IOI [sec]")+
   #annotate("text", x = 0.6, y = 9, label = "n = 1535")+
@@ -278,18 +283,18 @@ hist_ioi_beat <- doreco_rhythm_results_complete %>%
   theme_minimal()+
   ylab("Percentage [%]")+
   xlab("IOI Beat [Hz]")+
-  annotate("text", x = 0.6, y = 9, label = "n = 1535")+
+  annotate("text", x = 1.5, y = 9, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
   my_custom_theme
 print(hist_ioi_beat)
 
 hist_cv <- doreco_rhythm_results_complete %>% 
   ggplot(aes(x= unbiased_cv))+
   geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
-                 color = "white", fill = "darkblue", binwidth = 0.25)+
+                 color = "white", fill = "darkblue", binwidth = 0.1)+
   theme_minimal()+
   ylab("Percentage [%]")+
-  xlab("CV of IOI Durations")+
-  annotate("text", x = 1.5, y = 20, label = "n = 1535")+
+  xlab("CV of IOI Durations per Sequence")+
+  annotate("text", x = 1.0, y = 15, label = paste("n =", nrow(rhythm_results_doreco_ipu)), , size = 6)+
   my_custom_theme
 print(hist_cv)
 
@@ -303,11 +308,12 @@ density_ioibeat <-
   geom_vline(xintercept = min_outlier, linetype="dotted", linewidth = 2 )+  # zscore > 2, corresponding ioi beat
   geom_vline(xintercept = max_outlier, linetype="dotted", linewidth = 2)+  # zscore < -2, corresponding ioi beat
   geom_jitter(aes(y = -1, color = Language), alpha = 0.5, size = 0.5)+
-  annotate("text", x = 0.1, y = -0.3, label = paste("n =", n_outliers_bottom), size = 5)+
-  annotate("text", x = max_outlier-0.1, y = 2, label = expression("Z-Score "<="-1,96"), size = 5)+
-  annotate("text", x = 0.45, y = -0.3, label = paste("n =",n_elements_95 ), size = 5)+
-  annotate("text", x = 1, y = -0.3, label = paste("n =", n_outliers_top), size = 5)+
-  annotate("text", x = 1, y = 2, label = expression("Z-Score ">="1,96"), size = 5)+  
+  annotate("text", x = max_outlier-0.5, y = -0.3, label = paste("n =", n_outliers_bottom), size = 5)+
+  annotate("text", x = max_outlier-0.5, y = 2, label = expression("Z-Score "<="-1,96"), size = 5)+
+  annotate("text", x = 0.5, y = -0.3, label = paste("n =",n_elements_95 ), size = 5)+
+  annotate("text", x = 1.5, y = -0.3, label = paste("n =", n_outliers_top), size = 5)+
+  annotate("text", x = 1.5, y = 2, label = expression("Z-Score ">="1,96"), size = 5)+  
+  coord_cartesian(xlim = c(-0.5, 3))+
   ylab("Density")+
   xlab("IOI Beat [Hz]")+
   my_custom_theme
@@ -364,9 +370,10 @@ boxplot_languages <- doreco_rhythm_results_complete_ordered %>%
   group_by(speaker, Language) %>% 
   ggplot(aes(y = ioi_beat, x = Language, fill = Family))+
   geom_boxplot(outliers = FALSE)+
-  geom_jitter(alpha = 0.2, size = 0.8)+
+  geom_jitter(alpha = 0.2, size = 0.7)+
   theme_minimal()+
   scale_fill_manual(values = colors)+
+  coord_cartesian(ylim = c(0,1.75))+
   theme(legend.position = "none",
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = -0.1),
     legend.title = element_blank(),
@@ -528,17 +535,34 @@ doreco_rhythm_results_complete_summarized_file %>%
   my_custom_theme+
   scale_color_manual(values = colors)
 
+## 04j: n element information ----
+
+hist_n_element <- doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= n_elements))+
+  geom_histogram(aes(y=stat((count)/sum(stat(count))*100)),
+                 color = "white", fill = "darkblue", 
+                 boundary = 4)+
+  theme_minimal()+
+  #coord_cartesian(xlim = c(4,270))+
+  ylab("Percentage [%]")+
+  xlab("n Elements per Sequence")+
+  annotate("text", x = 100, y = 20, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
+  my_custom_theme
+print(hist_n_element)
+
+
+
 # 05: plot grids -----
 
 ## 05a: Figure 1 ----
 
 # Explanation (fig to be added elsewhere) Map, Histograms IOI distribution [sec]  
 
-hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,
-                   labels = c("C", "D"))
+hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,hist_n_element,
+                   labels = c("B", "C", "D"), ncol = 3)
 
-cowplot::plot_grid(map, hist_ioi_raw,
-                   labels = c("A", "B"), nrow = 2)
+cowplot::plot_grid(map, hist_plots,
+                   labels = c("A", "", "", ""), nrow = 2)
 
 ggsave("manuscript_figure1_part2.jpg", dpi = 300,
        width = 20,

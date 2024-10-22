@@ -23,12 +23,12 @@ install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools")
 # 01: load data ----- 
 
 ## rhythm results
-rhythm_results_doreco_ipu <- read_delim("rhythm_analysis_results/rhythm_analysis_median_ipu_99quantilebreaks_fs_20_new.csv", delim = ",")
+rhythm_results_doreco_ipu <- read_delim("rhythm_analysis_results/rhythm_analysis_median_io_pause99_split_fs_20.csv", delim = ",")
 
 # meta data
 
 ## languguage info, speaker info, including complexity score and tone language information
-meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Sept24.csv", delim = ",")
+meta_data_file <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", delim = ",")
 
 meta_data_file_subset <- meta_data_file %>% 
   select(file, Glottocode = "glottocode" ,speaker, speaker_age, speaker_sex,genre, synthesis, tone)
