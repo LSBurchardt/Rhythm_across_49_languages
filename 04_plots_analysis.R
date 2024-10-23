@@ -309,10 +309,10 @@ density_ioibeat <-
   geom_vline(xintercept = max_outlier, linetype="dotted", linewidth = 2)+  # zscore < -2, corresponding ioi beat
   geom_jitter(aes(y = -1, color = Language), alpha = 0.5, size = 0.5)+
   annotate("text", x = max_outlier-0.5, y = -0.3, label = paste("n =", n_outliers_bottom), size = 5)+
-  annotate("text", x = max_outlier-0.5, y = 2, label = expression("Z-Score "<="-1,96"), size = 5)+
+  annotate("text", x = max_outlier-0.5, y = 2, label = expression("Z-Score "<="-1.96"), size = 5)+
   annotate("text", x = 0.5, y = -0.3, label = paste("n =",n_elements_95 ), size = 5)+
   annotate("text", x = 1.5, y = -0.3, label = paste("n =", n_outliers_top), size = 5)+
-  annotate("text", x = 1.5, y = 2, label = expression("Z-Score ">="1,96"), size = 5)+  
+  annotate("text", x = 1.5, y = 2, label = expression("Z-Score ">="1.96"), size = 5)+  
   coord_cartesian(xlim = c(-0.5, 3))+
   ylab("Density")+
   xlab("IOI Beat [Hz]")+
