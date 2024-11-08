@@ -49,7 +49,7 @@ my_custom_theme <- theme_minimal() +
 
 doreco_rhythm_results_complete <- read_rds("rhythm_results_doreco_ipu_meta_complete.rds")
 
-ioi_data <- read_delim("iois_ipu_99quantilebreaks_means.csv", delim = ",")
+#ioi_data <- read_delim("iois_ipu_99quantilebreaks_means.csv", delim = ",")
 
 ioi_data_alternative <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", delim = ",")
 
@@ -239,7 +239,8 @@ mp <- rbind(mp1, mp2)
 # Create the base plot with the world map
 
 map <- ggplot() +  # No aesthetics here
-  geom_path(data = mp, aes(x = long, y = lat, group = group), fill = "grey75", color = "grey10") +  # World map outline
+  #geom_path(data = mp, aes(x = long, y = lat, group = group), fill = "grey75", color = "grey10") +  # World map outline
+  geom_path(data = mp, aes(x = long, y = lat, group = group), fill = "#F2DDC1", color = "grey10") +  # World map outline
   geom_point(data = unique_coords_df, aes(x = lon, y = lat), color = "red", size = 2) +  # Your points
   scale_x_continuous(limits = c(0, 360)) +  # Set x limits
   coord_fixed(ratio = 1) +  # Ensure aspect ratio is fixed
@@ -255,6 +256,34 @@ map <- ggplot() +  # No aesthetics here
     x = "Longitude [°]",
     y = "Latitude [°]"
   )
+
+
+# version 2
+
+doreco_rhythm_results_complete_summarized_file$Longitude<-sapply(doreco_rhythm_results_complete_summarized_file$Longitude,function(x) ifelse(x<(-25),x + 360,x))
+world <- map_data('world', interior=F, wrap=c(-25,335), ylim=c(-54,79))
+
+map_doreco <- ggplot() +
+  geom_polygon(
+    data=world,
+    aes(x=long,y=lat,group=group),
+    colour="grey",fill="#F2DDC1" ,linewidth=0.2, 
+  ) + 
+  geom_jitter(
+    data = doreco_rhythm_results_complete_summarized_file, aes(x = Longitude, y = Latitude), color = "red", size = 2
+  ) +
+  #scale_x_continuous(limits = c(0, 360)) +  # Set x limits
+  coord_fixed(ratio = 1) +  # Ensure aspect ratio is fixed
+  #scale_fill_viridis_d(option="D") +
+  # geom_label_repel(box.padding=0.5, point.padding=0.5,
+  #                  data=languages, aes(Longitude, Latitude, label=Name), 
+  #                  min.segment.length=unit(0, 'lines'),
+  #                  size=5, max.overlaps=99) +
+  scale_x_continuous(name=NULL, breaks=NULL) +
+  scale_y_continuous(name=NULL, breaks=NULL) +
+  theme_minimal() +
+  theme(legend.position="none") 
+
 
 
 ## 04b: ioi distribution plots -----
@@ -283,7 +312,7 @@ hist_ioi_beat <- doreco_rhythm_results_complete %>%
   theme_minimal()+
   ylab("Percentage [%]")+
   xlab("IOI Beat [Hz]")+
-  annotate("text", x = 1.5, y = 9, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
+  annotate("text", x = 1.5, y = 9, label = paste("n =", nrow(doreco_rhythm_results_complete)), size = 6)+
   my_custom_theme
 print(hist_ioi_beat)
 
@@ -294,7 +323,7 @@ hist_cv <- doreco_rhythm_results_complete %>%
   theme_minimal()+
   ylab("Percentage [%]")+
   xlab("CV of IOI Durations per Sequence")+
-  annotate("text", x = 1.0, y = 15, label = paste("n =", nrow(rhythm_results_doreco_ipu)), , size = 6)+
+  annotate("text", x = 1.0, y = 15, label = paste("n =", nrow(doreco_rhythm_results_complete)), , size = 6)+
   my_custom_theme
 print(hist_cv)
 
@@ -561,12 +590,19 @@ print(hist_n_element)
 hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,hist_n_element,
                    labels = c("B", "C", "D"), ncol = 3)
 
+# with map version 1
 cowplot::plot_grid(map, hist_plots,
                    labels = c("A", "", "", ""), nrow = 2)
 
-ggsave("manuscript_figure1_part2.jpg", dpi = 300,
-       width = 20,
-       height = 16)
+# with map version 2
+
+cowplot::plot_grid(map_doreco,hist_plots,
+                   labels = c("A", "", "", ""), nrow = 2 )
+
+
+ggsave("manuscript_figure1_part2_v2.jpg", dpi = 300,
+       width = 14,
+       height = 12)
 
 ## 05b: Figure 2-----
 
