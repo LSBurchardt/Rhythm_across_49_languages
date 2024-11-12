@@ -22,7 +22,8 @@ if (!require(install.load)) {
 
 library(install.load)
 
-install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools", "lme4", "maps", "effsize")
+install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools",
+             "lme4", "maps", "effsize","praatpicture", "grid", "ggplotify", "magick")
 
 ## 00b: prepare themes, color palettes, etc. ----
 
@@ -284,7 +285,9 @@ map_doreco <- ggplot() +
   theme_minimal() +
   theme(legend.position="none") 
 
-
+ggsave("map_plot_fig1_part1.jpg", dpi = 300,
+       width = 12,
+       height = 6)
 
 ## 04b: ioi distribution plots -----
 
@@ -579,7 +582,34 @@ hist_n_element <- doreco_rhythm_results_complete %>%
   my_custom_theme
 print(hist_n_element)
 
+## 04k: Annotation Plot from Praat ------
 
+png("annotation_plot.png", width = 12, height = 6, units = "in",  res = 300)
+
+annotation_plot <- praatpicture(
+  'BeAM_199X_HumanInLandOfDeath_flk_fragment.wav',
+  start = 0, 
+  end = 3.3,
+  frames = c('sound', 'spectrogram', 'TextGrid'),
+  proportion = c(30, 40, 30),
+  spec_freqRange = c(0, 16000),
+  
+  tg_tiers = c('text-dolgan', 'text-english', 'word-dolgan', 'word-english'),
+  tg_color = c('blue', 'black', 'black', 'black'),
+  tg_focusTier = 'all',
+  tg_focusTierLineType = c('solid', 'solid', 'dashed', 'dashed'),
+  tg_focusTierColor = c('black', 'black', 'black', 'black'),
+  
+  draw_arrow = c('spectrogram', 0.478, 8500, 2.321, 8500, code = 3,
+                 length = 0.15, 
+                 angle = 20, col = 'blue', lwd = 2, lty = 'solid'),
+  annotate = list(
+    c('spectrogram', 1.3, 7000, col = 'blue', font = 2, cex = 1.8, labels = 'Inter-Onset-Interval (IOI)')#,
+    #c('spectrogram', 2.0, 5000, col = 'red', font = 2, cex = 1.8, labels = 'Second Annotation')
+  )
+)
+
+dev.off()
 
 # 05: plot grids -----
 
@@ -588,11 +618,16 @@ print(hist_n_element)
 # Explanation (fig to be added elsewhere) Map, Histograms IOI distribution [sec]  
 
 hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,hist_n_element,
-                   labels = c("B", "C", "D"), ncol = 3)
+                   labels = c("C", "D", "E"), ncol = 3)
+
+ggsave("hist_plot_fig1_part3.jpg", dpi = 300, hist_plots,
+       width = 12,
+       height = 6)
 
 # with map version 1
+
 cowplot::plot_grid(map, hist_plots,
-                   labels = c("A", "", "", ""), nrow = 2)
+                   labels = c("A", "B", "", "", ""), nrow = 3)
 
 # with map version 2
 
@@ -600,9 +635,7 @@ cowplot::plot_grid(map_doreco,hist_plots,
                    labels = c("A", "", "", ""), nrow = 2 )
 
 
-ggsave("manuscript_figure1_part2_v2.jpg", dpi = 300,
-       width = 14,
-       height = 12)
+
 
 ## 05b: Figure 2-----
 
