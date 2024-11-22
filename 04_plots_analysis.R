@@ -132,8 +132,21 @@ doreco_rhythm_results_complete %>%
   summary(na.rm = TRUE)
 
 
+summary_by_language <- doreco_rhythm_results_complete %>% 
+  group_by(Language) %>% 
+  summarize(mean_ioi = round(mean(ioi_beat, na.rm = TRUE), digits = 2),
+            mean_elements = mean(n_elements, na.rm = TRUE),
+            speaker_nr = length(unique(speaker)),
+            file_nr = length(unique(file)))
 
-
+summary_by_language_iois <- ioi_data_alternative %>% 
+  group_by(glottocode) %>% 
+  summarize(nr_io_units = length(glottocode))
+            
+            #,
+            mean_elements = mean(n_elements, na.rm = TRUE),
+            speaker_nr = length(unique(speaker)),
+            file_nr = length(unique(file)))
 
 ## 03a: correlations and effect sizes ----
 
@@ -584,7 +597,7 @@ print(hist_n_element)
 
 ## 04k: Annotation Plot from Praat ------
 
-png("annotation_plot.png", width = 12, height = 6, units = "in",  res = 300)
+png("annotation_plot_fig1_part2.png", width = 12, height = 6, units = "in",  res = 300)
 
 annotation_plot <- praatpicture(
   'BeAM_199X_HumanInLandOfDeath_flk_fragment.wav',
@@ -615,7 +628,7 @@ dev.off()
 
 ## 05a: Figure 1 ----
 
-# Explanation (fig to be added elsewhere) Map, Histograms IOI distribution [sec]  
+# part 3 of Figure 1:  Histograms IOI distribution [sec]  
 
 hist_plots <- cowplot::plot_grid(hist_ioi_raw, hist_cv,hist_n_element,
                    labels = c("C", "D", "E"), ncol = 3)
@@ -624,18 +637,8 @@ ggsave("hist_plot_fig1_part3.jpg", dpi = 300, hist_plots,
        width = 12,
        height = 6)
 
-# with map version 1
-
-cowplot::plot_grid(map, hist_plots,
-                   labels = c("A", "B", "", "", ""), nrow = 3)
-
-# with map version 2
-
-cowplot::plot_grid(map_doreco,hist_plots,
-                   labels = c("A", "", "", ""), nrow = 2 )
-
-
-
+#part 1: annotations and part 2: map are generated and saved further up, figures where
+# combined outside of R
 
 ## 05b: Figure 2-----
 
