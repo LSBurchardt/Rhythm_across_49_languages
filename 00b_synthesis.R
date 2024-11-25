@@ -7,7 +7,7 @@ library(readr)
 ### Synthesis scores are defined as the mean number of morphs (roots, affixes, clitics) per unique word form ###
 ### Disfluencies, pauses, and units adjacent to word-internal pauses are excluded from the calculations ###
 
-# Read word-level CSV files from DoReCo 1.3
+# Read word-level CSV files from DoReCo 2.0
 csv_dir = "..."
 setwd("...")
 wd_csv_files <- list.files(path = csv_dir, pattern = "\\_wd.csv$", full.names = TRUE, recursive = TRUE)
@@ -30,4 +30,4 @@ synthesis_data <- wd_csv_data %>%
   summarise(synthesis = unique(synthesis), .groups = 'drop')
 
 # Write to a new CSV file
-write_csv(synthesis_data, "DoReCo_1_3_core_synthesis.csv")
+write_csv(synthesis_data, "DoReCo_2_0_core_synthesis.csv")
