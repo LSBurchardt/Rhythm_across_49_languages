@@ -1,10 +1,10 @@
 library(tidyverse)
 
-### This script reads the word-level core datasets from DoReCo 1.3 and reformats them such that one row corresponds to one inter-onset-interval (IOI) ###
+### This script reads the word-level core datasets from DoReCo 2.0 and reformats them such that one row corresponds to one inter-onset-interval (IOI) ###
 ### It also merges the metadata extracted in 0a_metadata.R and the synthesis scores created in 0b_synthesis.R ###
-### Lastly, the script merge the manually coded info on tone languages in DoReCo_1_3_tone.csv and the geographical data (sourced from Glottolog) in DoReCo_1_3_geo.csv ###
+### Lastly, the script merge the manually coded info on tone languages in DoReCo_2_0_tone.csv and the geographical data (sourced from Glottolog) in DoReCo_2_0_geo.csv ###
 
-# Read word-level CSV files from DoReCo 1.3
+# Read word-level CSV files from DoReCo 2.0
 csv_dir = "..."
 setwd("...")
 wd_csv_files <- list.files(path = csv_dir, pattern = "\\_wd.csv$", full.names = TRUE, recursive = TRUE)
@@ -37,7 +37,7 @@ io_data <- wd_csv_data %>%
   mutate(io_unit = row_number())
 
 # Read file-level metadata CSV, set corpus-wide unique speaker codes, and merge dataframes
-metadata <- read.csv("DoReCo_1_3_core_metadata_merged.csv")
+metadata <- read.csv("DoReCo_2_0_core_metadata_merged.csv")
 metadata$spk_code_a <- ifelse(
   is.na(metadata$spk_code_a),
   NA,
@@ -50,7 +50,7 @@ metadata$spk_code_b <- ifelse(
 )
 io_merged <- merge(io_data, metadata, by="file")
 
-# Remove problematic datapoints
+# Remove conversational and disfluent data
 io_clean <- io_merged %>%
   # Exclude conversational and stimulus-based genres
   filter(!(genre %in% c("conversation", "stimulus retelling"))) %>%
@@ -60,15 +60,15 @@ io_clean <- io_merged %>%
   filter(only_labels == FALSE)
 
 # Merge synthesis data
-synth_data <- read.csv("DoReCo_1_3_core_synthesis.csv")
+synth_data <- read.csv("DoReCo_2_0_core_synthesis.csv")
 io_synth <- merge(io_clean, synth_data, by="lang", all.x = TRUE)
 
 # Merge tone data
-tone_data <- read.csv("DoReCo_1_3_tone.csv")
+tone_data <- read.csv("DoReCo_2_0_tone.csv")
 io_tone <- merge(io_synth, tone_data, by="lang", all.x = TRUE)
 
 # Merge geographical data
-geo_data <- read.csv("DoReCo_1_3_geo.csv")
+geo_data <- read.csv("DoReCo_2_0_geo.csv")
 io_geo <- merge(io_tone, geo_data, by="lang", all.x = TRUE)
 
 # Cleaning up
@@ -79,5 +79,6 @@ io_final <- io_geo %>%
   arrange(io_unit) %>%
   select(file,speaker,io_unit,start_time,end_time,pause_duration,io_duration,genre,glottocode,speaker_age,speaker_sex,synthesis,tone,language,family,area,latitude,longitude)
 
+
 # Write to a new CSV file
-write_csv(io_final, "DoReCo_1_3_IO_20240928.csv")
+write_csv(io_final, "DoReCo_2_0_IO_20240928.csv")

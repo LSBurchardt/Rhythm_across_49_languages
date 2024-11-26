@@ -1,9 +1,9 @@
 library(dplyr)
 
-### This script combines and reformats metadata retrieved from DoReCo 1.3 ###
+### This script combines and reformats metadata retrieved from DoReCo 2.0 ###
 ### This allows the metadata to be easily merged with the core DoReCo data in 01_prep_doreco_data.R ###
 
-# Read individual metadata csv files from DoReCo 1.3
+# Read individual metadata csv files from DoReCo 2.0
 setwd("...")
 directory_path <- "..."
 file_paths <- list.files(path = directory_path, pattern = "*.csv", full.names = TRUE)
@@ -85,5 +85,5 @@ final_df <- processed_df %>%
   select(-name,-id)
 
 # Save new csv file
-output_file <- "DoReCo_1_3_core_metadata_merged.csv"
+output_file <- "DoReCo_2_0_core_metadata_merged.csv"
 write.csv(final_df, file = output_file, row.names = FALSE)
