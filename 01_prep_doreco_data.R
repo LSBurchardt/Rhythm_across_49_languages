@@ -5,8 +5,8 @@ library(tidyverse)
 ### Lastly, the script merge the manually coded info on tone languages in DoReCo_2_0_tone.csv and the geographical data (sourced from Glottolog) in DoReCo_2_0_geo.csv ###
 
 # Read word-level CSV files from DoReCo 2.0
-csv_dir = "C:/ling/00_projects/biology/wd_csv"
-setwd("C:/ling/00_projects/biology")
+csv_dir = "..."
+setwd("...")
 wd_csv_files <- list.files(path = csv_dir, pattern = "\\_wd.csv$", full.names = TRUE, recursive = TRUE)
 wd_csv_data <- map_df(wd_csv_files, readr::read_csv)
 
