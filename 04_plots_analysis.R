@@ -143,11 +143,7 @@ summary_by_language_iois <- ioi_data_alternative %>%
   group_by(glottocode) %>% 
   summarize(nr_io_units = length(glottocode))
             
-            #,
-            mean_elements = mean(n_elements, na.rm = TRUE),
-            speaker_nr = length(unique(speaker)),
-            file_nr = length(unique(file)))
-
+           
 ## 03a: correlations and effect sizes ----
 
 
