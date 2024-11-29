@@ -132,11 +132,17 @@ doreco_rhythm_results_complete %>%
   summary(na.rm = TRUE)
 
 
-summary_by_language <- doreco_rhythm_results_complete %>% 
+summary_by_language_median <- doreco_rhythm_results_complete %>% 
   group_by(Language) %>% 
-  summarize(mean_ioi = round(mean(ioi_beat, na.rm = TRUE), digits = 2),
-            mean_elements = mean(n_elements, na.rm = TRUE),
+  summarize(median_ioi = round(median(ioi_beat, na.rm = TRUE), digits = 2),
+            median_elements = median(n_elements, na.rm = TRUE),
             speaker_nr = length(unique(speaker)),
+            file_nr = length(unique(file)))
+
+summary_by_speaker <- doreco_rhythm_results_complete %>% 
+  group_by(speaker) %>% 
+  summarize(median_ioi_speaker = round(median(ioi_beat, na.rm = TRUE), digits = 2),
+            filename_nr = length(unique(filename)),
             file_nr = length(unique(file)))
 
 summary_by_language_iois <- ioi_data_alternative %>% 
@@ -590,6 +596,23 @@ hist_n_element <- doreco_rhythm_results_complete %>%
   annotate("text", x = 100, y = 20, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
   my_custom_theme
 print(hist_n_element)
+
+
+# n elements vs. cv 
+
+doreco_rhythm_results_complete %>% 
+  ggplot(aes(x= n_elements, y = unbiased_cv))+
+  geom_point(alpha = 0.5, shape = 21)+
+  #geom_smooth(method = "lm")+
+  theme_minimal()+
+  #coord_cartesian(xlim = c(4,270))+
+  ylab("CV")+
+  xlab("n Elements per Sequence")+
+  #annotate("text", x = 100, y = 20, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
+  my_custom_theme
+
+cor(doreco_rhythm_results_complete$n_elements, doreco_rhythm_results_complete$unbiased_cv)
+# r = 0.02 --> negligible, but higher variability for shorter sequences 
 
 ## 04k: Annotation Plot from Praat ------
 
