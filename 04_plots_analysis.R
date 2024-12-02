@@ -137,7 +137,8 @@ summary_by_language_median <- doreco_rhythm_results_complete %>%
   summarize(median_ioi = round(median(ioi_beat, na.rm = TRUE), digits = 2),
             median_elements = median(n_elements, na.rm = TRUE),
             speaker_nr = length(unique(speaker)),
-            file_nr = length(unique(file)))
+            file_nr = length(unique(file)),
+            filename_nr = length(unique(filename)))
 
 summary_by_speaker <- doreco_rhythm_results_complete %>% 
   group_by(speaker) %>% 
