@@ -35,7 +35,7 @@ meta_data_file_subset <- meta_data_file %>%
 
 ## additional meta info from doreco (final version?)
 
-meta_languages <- read_delim("doreco_languages_metadata_v1.3.csv", delim = ",")
+meta_languages <- read_delim("doreco_languages_metadata_v2.0.csv", delim = ",")
 
 ## average height of men for selected countries
 
