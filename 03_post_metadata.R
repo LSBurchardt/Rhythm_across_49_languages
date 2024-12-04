@@ -1,7 +1,6 @@
 # Rhythm Analysis of DoReCo languages
 # Involved: Susanne Fuchs, Ludger Paschen, Lara S. Burchardt
 # R Codes from: Lara S. Burchardt 
-# Affiliation: Leibniz Center General Linguistics, Leibniz-Zentrum Allgemeine Sprachwissenschaft Berlin
 
 # Script  5 of 6
 
@@ -23,7 +22,7 @@ install_load("tidyverse", "psych", "tidygeocoder", "countrycode", "devtools")
 # 01: load data ----- 
 
 ## rhythm results
-rhythm_results_doreco_ipu <- read_delim("rhythm_analysis_results/rhythm_analysis_median_io_pause99_split_fs_20.csv", delim = ",")
+rhythm_results_doreco_ioi <- read_delim("rhythm_analysis_results/rhythm_analysis_median_io_pause99_split_fs_20.csv", delim = ",")
 
 # meta data
 
@@ -35,7 +34,7 @@ meta_data_file_subset <- meta_data_file %>%
 
 ## additional meta info from doreco (final version?)
 
-meta_languages <- read_delim("doreco_languages_metadata_v1.3.csv", delim = ",")
+meta_languages <- read_delim("doreco_languages_metadata_2_0.csv", delim = ",")
 
 ## average height of men for selected countries
 
@@ -47,28 +46,28 @@ heights <- read_delim("average-height-of-men-for-selected-countries.csv", delim 
 
 # 02: add meta data about language from Doreco to rhythm results-----
 
-for(i in 1:length(rhythm_results_doreco_ipu$filename)){
-  names <- str_split(rhythm_results_doreco_ipu$filename[i], pattern = "_")
+for(i in 1:length(rhythm_results_doreco_ioi$filename)){
+  names <- str_split(rhythm_results_doreco_ioi$filename[i], pattern = "_")
   names <- names[[1]]
-  rhythm_results_doreco_ipu$file[i] <- names[[5]]   #filename from raw file, to use to join rhythm results with meta data file
+  rhythm_results_doreco_ioi$file[i] <- names[[5]]   #filename from raw file, to use to join rhythm results with meta data file
 }
 
 #  meta data like speaker sex and speaker age needs to be extracted/joined from raw data extraction from Database
 
-rhythm_results_doreco_ipu_meta <- left_join(rhythm_results_doreco_ipu, meta_data_file_subset, by = "file", multiple = "any")
+rhythm_results_doreco_ioi_meta <- left_join(rhythm_results_doreco_ioi, meta_data_file_subset, by = "file", multiple = "any")
 
 
-rhythm_results_doreco_ipu_meta <- left_join(rhythm_results_doreco_ipu_meta, meta_languages, by = "Glottocode" , multiple = "any")
+rhythm_results_doreco_ioi_meta <- left_join(rhythm_results_doreco_ioi_meta, meta_languages, by = "Glottocode" , multiple = "any")
 
 # 03: add additional meta data ----
 
 # 03a: adding lattitude/longitude ----
 
-for(a in 1:nrow(rhythm_results_doreco_ipu_meta)){
+for(a in 1:nrow(rhythm_results_doreco_ioi_meta)){
   #  for(a in 1:5){
   lat_longs <- tibble::tribble(
     ~latitude,        ~longitude,
-    rhythm_results_doreco_ipu_meta$Latitude[a],           rhythm_results_doreco_ipu_meta$Longitude[a]
+    rhythm_results_doreco_ioi_meta$Latitude[a],           rhythm_results_doreco_ioi_meta$Longitude[a]
   )
   
   reverse <-  lat_longs %>%
@@ -76,12 +75,12 @@ for(a in 1:nrow(rhythm_results_doreco_ipu_meta)){
                     address = address_found, full_results = TRUE) %>%
     select(country, country_code)
   
-  rhythm_results_doreco_ipu_meta$country[a] <- reverse$country
-  rhythm_results_doreco_ipu_meta$country_code[a] <- reverse$country_code
+  rhythm_results_doreco_ioi_meta$country[a] <- reverse$country
+  rhythm_results_doreco_ioi_meta$country_code[a] <- reverse$country_code
   
   country_name_eng <- countrycode(reverse$country_code, "iso2c", "country.name")
   
-  rhythm_results_doreco_ipu_meta$country_eng[a] <- country_name_eng
+  rhythm_results_doreco_ioi_meta$country_eng[a] <- country_name_eng
   
   rm(reverse)
   
@@ -103,17 +102,15 @@ heights_avg <- heights %>%
             max_height = max(Height, na.rm = TRUE),
             min_height = min(Height, na.rm = TRUE))
 
-
-rhythm_results_doreco_ipu_meta<- left_join(rhythm_results_doreco_ipu_meta, heights_avg, by = "country_eng", multiple = "any")
-
+rhythm_results_doreco_ioi_meta<- left_join(rhythm_results_doreco_ioi_meta, heights_avg, by = "country_eng", multiple = "any")
 
 # 04: save final results table
 
 # deselect some columns, that we do not need for the analysis for better clarity
 
-rhythm_results_doreco_ipu_meta <- rhythm_results_doreco_ipu_meta %>% 
+rhythm_results_doreco_ioi_meta <- rhythm_results_doreco_ioi_meta %>% 
   select(-mean_min_dev_ioi, -mean_min_dev_fft, -fourier_beat, -ugof_fft,
          -silent_beats_fft, -silent_beats_ioi, -npvi_ugof_fft, -cv_ugof_fft,
          -freq_reso, -signal_length, -elements, -raw_element_seq)
 
-saveRDS(rhythm_results_doreco_ipu_meta, file = "rhythm_results_doreco_ipu_meta_complete.rds")
+saveRDS(rhythm_results_doreco_ioi_meta, file = "rhythm_results_doreco_ioi_meta_complete.rds")

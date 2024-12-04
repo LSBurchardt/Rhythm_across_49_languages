@@ -1,14 +1,13 @@
 # Rhythm Analysis of DoReCo languages
 # Involved: Susanne Fuchs, Ludger Paschen, Lara S. Burchardt
 # R Codes from: Lara S. Burchardt 
-# Affiliation: Leibniz Center General Linguistics, Leibniz-Zentrum Allgemeine Sprachwissenschaft Berlin
 
 # Script  4 of 6
 
-# data preparation: data input includes ~150.000 ipus from more than 50 languages and
+# data preparation: data input includes ~100.000 iois from 49 languages and
 # multiple speakers per language
-# we seperate the data into unintertupted instances of speech from one speaker, per language
-# we extract onsets and offsets of ipus
+# we separate the data into uninterrupted instances of speech from one speaker, per language
+# we extract onsets and offsets of events
 
 ###############################################################################
 
@@ -28,28 +27,28 @@ install_load("tidyverse", "stringr")
 # 01b: load data ----
 
 
-data_ipu <- read_delim("DoReCo_1_3_IO_20240923.csv", delim = ",")
+data_ioi <- read_delim("DoReCo_2_0_IO_20240928.csv", delim = ",")
 
 # 02: preparations ----
 
 # 02a: identifier----
 
-languages <- unique(data_ipu$glottocode)
+languages <- unique(data_ioi$glottocode)
 
-data_ipu$element <- "a"
+data_ioi$element <- "a"
 
 # change file name so, that it is not separated with _ but with - to make string splitting easier in post processing
 # (in post processing we want to split by _ but we don't want the file name to be split)
 
-data_ipu$file <- str_replace_all(data_ipu$file, "_", "-")
+data_ioi$file <- str_replace_all(data_ioi$file, "_", "-")
 
 # we apply the same transformation to the Speaker name
 
-data_ipu$speaker <- str_replace_all(data_ipu$speaker, "_", "-")
+data_ioi$speaker <- str_replace_all(data_ioi$speaker, "_", "-")
 
 # add column "speech_duration" 
 
-data_ipu$sprach_dauer <-data_ipu$io_duration-data_ipu$pause_duration
+data_ioi$sprach_dauer <-data_ioi$io_duration-data_ioi$pause_duration
 
 
 # 03: file separation & saving ----
@@ -59,7 +58,7 @@ data_ipu$sprach_dauer <-data_ipu$io_duration-data_ipu$pause_duration
 # function below, to automatically save them as separate files
 
 # calculating cut_off
-pause_cutoff <- quantile(data_ipu$pause_duration, .99)
+pause_cutoff <- quantile(data_ioi$pause_duration, .99)
 
 # defining function for splitting due to silent breaks
 
@@ -98,24 +97,24 @@ assign_part <- function(df) {
 
 #adding column "part" indicating sequences seperated by silent breaks
 
-data_ipu <- data_ipu %>%
+data_ioi <- data_ioi %>%
   group_by(file, speaker) %>%
   do(assign_part(.)) %>%
   ungroup()
 
 
 # we filter out the rows with too long silent breaks, to actually exclude those intervals from the analysis
-data_ipu <- data_ipu %>% 
+data_ioi <- data_ioi %>% 
   filter(pause_duration < pause_cutoff)
 
 # save prepared data table in full, to access meta data after rhythm analysis and to analyse io durations, pause durations etc. across dataset
 
-write.table(data_ipu, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+write.table(data_ioi, file = "unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", sep = ",", col.names = TRUE, row.names = FALSE)
 
 # saving individual csv files to be used in RANTO app
 
 for (x in 1:length(languages)){
-  test <-  data_ipu %>% 
+  test <-  data_ioi %>% 
     filter(glottocode == languages[x]) %>%
     mutate(file = as.factor(file),
            speaker = as.factor(speaker)) %>% 

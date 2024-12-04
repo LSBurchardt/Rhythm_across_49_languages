@@ -3,3 +3,5 @@ DORECO.Rproj
 .RData
 .Rhistory
 *.csv
+.RDataTmp
+.RDataTmp1

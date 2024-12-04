@@ -1,14 +1,11 @@
 # Rhythm Analysis of DoReCo languages
 # Involved: Susanne Fuchs, Ludger Paschen, Lara S. Burchardt
 # R Codes from: Lara S. Burchardt 
-# Affiliation: Leibniz Center General Linguistics, Leibniz-Zentrum Allgemeine Sprachwissenschaft Berlin
 
 # Script  6 of 6
 
 # Plots and Analyses for rhythm analysis
 
-###LP: Globally: Replace IPU by IOI (?) -- done
-###LP: Rename repository from "DoReCo" to something more specific like "IOI beat across languages" -- done 
 
 ###############################################################################
 
@@ -48,11 +45,11 @@ my_custom_theme <- theme_minimal() +
 
 # 01: load data ----- 
 
-doreco_rhythm_results_complete <- read_rds("rhythm_results_doreco_ipu_meta_complete.rds")
+doreco_rhythm_results_complete <- read_rds("rhythm_results_doreco_ioi_meta_complete.rds")
 
 #ioi_data <- read_delim("iois_ipu_99quantilebreaks_means.csv", delim = ",")
 
-ioi_data_alternative <- read_delim("unsplit_ipu_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", delim = ",")
+ioi_data_alternative <- read_delim("unsplit_ioi_data_for_rhythm_analysis_including_meta_data_run_Oct24.csv", delim = ",")
 
 # 02: data wrangling ----
 
@@ -411,7 +408,7 @@ doreco_rhythm_results_complete %>%
 
 ## 04d: ioi beat language/ language family plots ----
 
-#languages_ipu
+#languages_ioi
 
 boxplot_languages <- doreco_rhythm_results_complete_ordered %>% 
   dplyr::filter(is.na(ioi_beat) == FALSE) %>% 
@@ -594,7 +591,7 @@ hist_n_element <- doreco_rhythm_results_complete %>%
   #coord_cartesian(xlim = c(4,270))+
   ylab("Percentage [%]")+
   xlab("n Elements per Sequence")+
-  annotate("text", x = 100, y = 20, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
+  annotate("text", x = 100, y = 20, label = paste("n =", nrow(doreco_rhythm_results_complete)), size = 6)+
   my_custom_theme
 print(hist_n_element)
 
@@ -609,7 +606,7 @@ doreco_rhythm_results_complete %>%
   #coord_cartesian(xlim = c(4,270))+
   ylab("CV")+
   xlab("n Elements per Sequence")+
-  #annotate("text", x = 100, y = 20, label = paste("n =", nrow(rhythm_results_doreco_ipu)), size = 6)+
+  #annotate("text", x = 100, y = 20, label = paste("n =", nrow(doreco_rhythm_results_complete)), size = 6)+
   my_custom_theme
 
 cor(doreco_rhythm_results_complete$n_elements, doreco_rhythm_results_complete$unbiased_cv)
